@@ -1,3 +1,8 @@
-//
-// Created by Артемий Толкишевский on 23.03.2024.
-//
+#include <iostream>
+#include "menu.h"
+#include "figures.h"
+int main() {
+    Menu::runMenu();
+
+    return 0;
+}
