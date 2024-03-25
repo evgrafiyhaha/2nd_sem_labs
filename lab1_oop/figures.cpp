@@ -34,21 +34,21 @@ Triangle::Triangle(std::string n, double x1, double y1, double x2, double y2, do
 }
 
 void Circle::showParams() {
-    std::cout << "Name:" << name << "\n";
+    std::cout << "Name: " << name << "\n";
     std::cout << "Type: Circle\n";
     std::cout << "Center coordinate: (" << centerCoordinateX << "," << centerCoordinateY << ")\n";
-    std::cout << "Radius:" << radius << "\n";
+    std::cout << "Radius: " << radius << "\n";
 }
 
 void Rectangle::showParams() {
-    std::cout << "Name:" << name << "\n";
+    std::cout << "Name: " << name << "\n";
     std::cout << "Type: Rectangle\n";
     std::cout << "Lower left corner coordinate: (" << lowerLeftCornerCoordX << "," << lowerLeftCornerCoordY << ")\n";
     std::cout << "Upper right corner coordinate: (" << upperRightCornerCoordX << "," << upperRightCornerCoordY << ")\n";
 }
 
 void Triangle::showParams() {
-    std::cout << "Name:" << name << "\n";
+    std::cout << "Name: " << name << "\n";
     std::cout << "Type: Triangle\n";
     std::cout << "First point coordinate: (" << firstCoordX << "," << firstCoordY << ")\n";
     std::cout << "Second point coordinate: (" << secondCoordX << "," << secondCoordY << ")\n";
@@ -71,19 +71,19 @@ double Circle::findPerimeter() {
 }
 
 void Circle::showPerimeter() {
-    std::cout << "Name:" << name << "\n";
+    std::cout << "Name: " << name << "\n";
     std::cout << "Type: Circle\n";
     std::cout << "Perimeter: " << this->findPerimeter() << "\n";
 }
 
 void Rectangle::showPerimeter() {
-    std::cout << "Name:" << name << "\n";
+    std::cout << "Name: " << name << "\n";
     std::cout << "Type: Rectangle\n";
     std::cout << "Perimeter: " << this->findPerimeter() << "\n";
 }
 
 void Triangle::showPerimeter() {
-    std::cout << "Name:" << name << "\n";
+    std::cout << "Name: " << name << "\n";
     std::cout << "Type: Triangle\n";
     std::cout << "Perimeter: " << this->findPerimeter() << "\n";
 }

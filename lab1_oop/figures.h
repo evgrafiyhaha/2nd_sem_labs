@@ -14,6 +14,7 @@ class Figures {
 protected:
     std::string name;
 public:
+    virtual ~Figures() = default;
     virtual double findPerimeter() = 0;
     virtual void showParams() = 0;
     virtual void showPerimeter() = 0;

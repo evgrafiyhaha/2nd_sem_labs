@@ -4,6 +4,7 @@
 
 
 void Menu::runMenu() {
+    Menu::initializeMenuOptions();
     std::string choice;
     std::vector<Figures*> figures;
     do {
@@ -13,40 +14,15 @@ void Menu::runMenu() {
             printf("Error reading input. Please input number in range 1-7\n");
             continue;
         }
-        if (choice.length() == 1) {
-            switch (choice[0]) {
-                case '1':
-                    Menu::addFigure(figures);
-                    break;
-                case '2':
-                    Menu::showFigures(figures);
-                    break;
-                case '3':
-                    Menu::showPerimeters(figures);
-                    break;
-                case '4':
-                    Menu::printSumOfPerimeters(figures);
-                    break;
-                case '5':
-                    Menu::sortFiguresByPerimeter(figures);
-                    break;
-                case '6':
-                    Menu::deleteFigureByIndex(figures);
-                    break;
-                case '7':
-                    ;
-                    break;
-                case '8':
-                    ;
-                    break;
-                default:
-                    printf("Invalid choice. Try again.\n");
-            }
+        if (Menu::menuOptions.find(choice) != Menu::menuOptions.end()) {
+            Menu::menuOptions[choice](figures);
+        } else if (choice == "8"){
+            ;
         } else {
             printf("Invalid input. Please enter a single character.\n");
         }
 
-    } while (choice[0] != '8' || choice.length() != 1);
+    } while (choice != "8");
 }
 
 void Menu::showMenu() {
@@ -62,17 +38,12 @@ void Menu::showMenu() {
 }
 
 void Menu::addFigure(std::vector<Figures*> &list) {
+    Menu::initializeFiguresOptions();
     std::string choice;
     std::cout << "Chose a figure you want to add:\n";
     std::cin >> choice;
-    if (choice == "Triangle") {
-        Menu::addTriangle(list);
-        std::cout << "Figure added successfully!\n";
-    } else if (choice == "Circle") {
-        Menu::addCircle(list);
-        std::cout << "Figure added successfully!\n";
-    } else if (choice == "Rectangle") {
-        Menu::addRectangle(list);
+    if (Menu::figuresOptions.find(choice) != Menu::figuresOptions.end()) {
+        Menu::figuresOptions[choice](list);
         std::cout << "Figure added successfully!\n";
     } else {
         std::cout << "You are invalid((\n"
@@ -95,6 +66,7 @@ void Menu::addTriangle(std::vector<Figures*> &list) {
     std::cin >> firstCoordX >> firstCoordY >> secondCoordX >> secondCoordY >> thirdCoordX >> thirdCoordY;
     list.push_back(new Triangle(name, firstCoordX, firstCoordY, secondCoordX, secondCoordY, thirdCoordX, thirdCoordY));
 }
+
 void Menu::addCircle(std::vector<Figures*> &list) {
     std::string name;
     double centerCoordinateX;
@@ -160,6 +132,42 @@ void Menu::deleteFigureByIndex(std::vector<Figures*> &list) {
     std::cout << "Enter an index of a figure you want to delete(from 0): " << "\n";
     std::cin >> index;
     if (index >=0 && index < list.size()) {
-        delete list[index];//it doesn`t work
+        delete list[index];
+        list.erase(list.begin() + index);
+        std::cout <<"Figure has been deleted!\n";
+    } else {
+        std::cout <<"There is no such index\n";
     }
+}
+
+void Menu::deleteFiguresByPerimeter(std::vector<Figures*> &list) {
+    double enteredValue;
+    std::cout << "Enter an value to delete figures with larger perimeters: " << "\n";
+    std::cin >> enteredValue;
+    for (unsigned i = 0;i < list.size(); i++) {
+        if (list[i]->findPerimeter() > enteredValue) {
+            delete list[i];
+            list.erase(list.begin() + i);
+        }
+    }
+    std::cout <<"Figures has been deleted!\n";
+}
+
+std::map<std::string, std::function<void(std::vector<Figures*>&)>> Menu::menuOptions;
+std::map<std::string, std::function<void(std::vector<Figures*>&)>> Menu::figuresOptions;
+
+void Menu::initializeMenuOptions() {
+    menuOptions["1"] = &Menu::addFigure;
+    menuOptions["2"] = &Menu::showFigures;
+    menuOptions["3"] = &Menu::showPerimeters;
+    menuOptions["4"] = &Menu::printSumOfPerimeters;
+    menuOptions["5"] = &Menu::sortFiguresByPerimeter;
+    menuOptions["6"] = &Menu::deleteFigureByIndex;
+    menuOptions["7"] = &Menu::deleteFiguresByPerimeter;
+}
+
+void Menu::initializeFiguresOptions() {
+    figuresOptions["Triangle"] = &Menu::addTriangle;
+    figuresOptions["Circle"] = &Menu::addCircle;
+    figuresOptions["Rectangle"] = &Menu::addRectangle;
 }
