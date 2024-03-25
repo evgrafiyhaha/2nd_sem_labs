@@ -7,57 +7,59 @@
 #include <string>
 #include <stdexcept>
 #include <iostream>
+#include "cmath"
+#define _USE_MATH_DEFINES
 
 class Figures {
 protected:
     std::string name;
-
-
-
 public:
-     Figures() = default;
-     //virtual float findPerimeter();
-     //virtual void showParams();
+    virtual double findPerimeter() = 0;
+    virtual void showParams() = 0;
+    virtual void showPerimeter() = 0;
 };
 
 class Circle: public Figures {
 private:
 
-    float centerCoordinateX;
-    float centerCoordinateY;
-    float radius;
+    double centerCoordinateX;
+    double centerCoordinateY;
+    double radius;
 public:
-    void showParams();
-    Circle(std::string n, float x, float y, float r);
+    void showParams() override;
+    void showPerimeter() override;
+    Circle(std::string n, double x, double y, double r);
+    double findPerimeter() override;
 };
 
 class Rectangle: public Figures {
 private:
-    float lowerLeftCornerCoordX;
-    float lowerLeftCornerCoordY;
-    float upperRightCornerCoordX;
-    float upperRightCornerCoordY;
+    double lowerLeftCornerCoordX;
+    double lowerLeftCornerCoordY;
+    double upperRightCornerCoordX;
+    double upperRightCornerCoordY;
 public:
-    Rectangle(std::string n, float x1, float y1, float x2, float y2);
-    void showParams();
+    Rectangle(std::string n, double x1, double y1, double x2, double y2);
+    double findPerimeter() override;
+    void showParams() override;
+    void showPerimeter() override;
 };
 
 class Triangle: public Figures {
 private:
-    float firstCoordX;
-    float firstCoordY;
-    float secondCoordX;
-    float secondCoordY;
-    float thirdCoordX;
-    float thirdCoordY;
+    double firstCoordX;
+    double firstCoordY;
+    double secondCoordX;
+    double secondCoordY;
+    double thirdCoordX;
+    double thirdCoordY;
 public:
-    Triangle(std::string n, float x1, float y1, float x2, float y2, float x3, float y3);
-    void showParams();
+    Triangle(std::string n, double x1, double y1, double x2, double y2, double x3, double y3);
+    void showParams() override;
+    void showPerimeter() override;
+    double findPerimeter() override;
 };
 
-
-
-
-
+bool comparePerimeter(Figures* f1, Figures* f2);
 
 #endif //LAB1_OOP_FIGURES_H

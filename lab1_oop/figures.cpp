@@ -1,8 +1,7 @@
 #include "figures.h"
-
 #include <utility>
 
-Circle::Circle(std::string n, float x, float y, float r) {
+Circle::Circle(std::string n, double x, double y, double r) {
     if (r <= 0) {
         //throw
     }
@@ -12,8 +11,8 @@ Circle::Circle(std::string n, float x, float y, float r) {
     radius = r;
 }
 
-Rectangle::Rectangle(std::string n, float x1, float y1, float x2, float y2) {
-    if (x1 >= x2 || y1 >= y2) {
+Rectangle::Rectangle(std::string n, double x1, double y1, double x2, double y2) {
+    if (x1 == x2 || y1 == y2) {
         //throw
     }
     name = std::move(n);
@@ -23,7 +22,7 @@ Rectangle::Rectangle(std::string n, float x1, float y1, float x2, float y2) {
     upperRightCornerCoordY = y2;
 }
 
-Triangle::Triangle(std::string n, float x1, float y1, float x2, float y2, float x3, float y3) {
+Triangle::Triangle(std::string n, double x1, double y1, double x2, double y2, double x3, double y3) {
     //написать проверерку на правильность
     name = std::move(n);
     firstCoordX = x1;
@@ -50,8 +49,41 @@ void Rectangle::showParams() {
 
 void Triangle::showParams() {
     std::cout << "Name:" << name << "\n";
-    std::cout << "Type: Rectangle\n";
+    std::cout << "Type: Triangle\n";
     std::cout << "First point coordinate: (" << firstCoordX << "," << firstCoordY << ")\n";
     std::cout << "Second point coordinate: (" << secondCoordX << "," << secondCoordY << ")\n";
     std::cout << "Third point coordinate: (" << thirdCoordX << "," << thirdCoordY << ")\n";
+}
+
+double Rectangle::findPerimeter() {
+    return 2*(fabs(lowerLeftCornerCoordY - upperRightCornerCoordY) + fabs(lowerLeftCornerCoordX - upperRightCornerCoordX));
+}
+
+double Triangle::findPerimeter() {
+    double firstLine = sqrt(pow((firstCoordX - secondCoordX), 2) + pow((firstCoordY - secondCoordY), 2));
+    double secondLine = sqrt(pow((firstCoordX - thirdCoordX), 2) + pow((firstCoordY - thirdCoordY), 2));
+    double thirdLine = sqrt(pow((secondCoordX - thirdCoordX), 2) + pow((secondCoordY - thirdCoordY), 2));
+    return firstLine + secondLine + thirdLine;
+}
+
+double Circle::findPerimeter() {
+    return 2 * M_PI * radius;
+}
+
+void Circle::showPerimeter() {
+    std::cout << "Name:" << name << "\n";
+    std::cout << "Type: Circle\n";
+    std::cout << "Perimeter: " << this->findPerimeter() << "\n";
+}
+
+void Rectangle::showPerimeter() {
+    std::cout << "Name:" << name << "\n";
+    std::cout << "Type: Rectangle\n";
+    std::cout << "Perimeter: " << this->findPerimeter() << "\n";
+}
+
+void Triangle::showPerimeter() {
+    std::cout << "Name:" << name << "\n";
+    std::cout << "Type: Triangle\n";
+    std::cout << "Perimeter: " << this->findPerimeter() << "\n";
 }
