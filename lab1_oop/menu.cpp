@@ -1,10 +1,8 @@
 #include "menu.h"
 
-#include <utility>
-
-
 void Menu::runMenu() {
     Menu::initializeMenuOptions();
+    Menu::initializeFiguresOptions();
     std::string choice;
     std::vector<Figures*> figures;
     do {
@@ -16,7 +14,7 @@ void Menu::runMenu() {
             } else if (choice == "8"){
                 ;
             } else {
-                std::cerr << "Invalid input. Please enter a number between 1 and 8.\n";
+                std::cerr << INVALID_MENU_OPTION << "\n";
             }
         } catch (const BadInputType& e) {
             std::cerr << e.what() << "\n";
@@ -33,6 +31,8 @@ void Menu::runMenu() {
         } catch (const EmptyListForSumming& e) {
             std::cerr << e.what() << "\n";
         } catch (const BadIndexForDeletion& e) {
+            std::cerr << e.what() << "\n";
+        } catch (const BadAmountOfVertices& e) {
             std::cerr << e.what() << "\n";
         }
 
@@ -52,7 +52,6 @@ void Menu::showMenu() {
 }
 
 void Menu::addFigure(std::vector<Figures*> &list) {
-    Menu::initializeFiguresOptions();
     std::string choice;
     std::cout << "Choose a figure you want to add:\n";
     std::cin >> choice;
@@ -60,16 +59,15 @@ void Menu::addFigure(std::vector<Figures*> &list) {
         Menu::figuresOptions[choice](list);
         std::cout << "Figure added successfully!\n";
     } else {
-        throw BadFigureName("There is no such figure");
+        throw BadFigureName(BAD_FIGURE_NAME);
     }
 }
 
 void Menu::addTriangle(std::vector<Figures*> &list) {
     std::string name;
-    //std::pair<double,double> alexander;
-    std::cout << "Enter a name for your figure\n";
+    std::cout << "Enter a name for your figure:\n";
     std::cin >> name;
-    std::cout << "Enter parameters for your figure(coordinates of three points)\n";
+    std::cout << "Enter parameters for your figure(coordinates of three points):\n";
     double firstCoordX = getValue();
     double firstCoordY = getValue();
     double secondCoordX = getValue();
@@ -81,9 +79,9 @@ void Menu::addTriangle(std::vector<Figures*> &list) {
 
 void Menu::addCircle(std::vector<Figures*> &list) {
     std::string name;
-    std::cout << "Enter a name for your figure\n";
+    std::cout << "Enter a name for your figure:\n";
     std::cin >> name;
-    std::cout << "Enter parameters for your figure(coordinates of centre and radius)\n";
+    std::cout << "Enter parameters for your figure(coordinates of centre and radius):\n";
     double centerCoordinateX = getValue();
     double centerCoordinateY = getValue();
     double radius = getValue();
@@ -92,9 +90,9 @@ void Menu::addCircle(std::vector<Figures*> &list) {
 
 void Menu::addRectangle(std::vector<Figures*> &list) {
     std::string name;
-    std::cout << "Enter a name for your figure\n";
+    std::cout << "Enter a name for your figure:\n";
     std::cin >> name;
-    std::cout << "Enter parameters for your figure(coordinates of two points)\n";
+    std::cout << "Enter parameters for your figure(coordinates of two points):\n";
     double lowerLeftCornerCoordX = getValue();
     double lowerLeftCornerCoordY = getValue();
     double upperRightCornerCoordX = getValue();
@@ -102,10 +100,30 @@ void Menu::addRectangle(std::vector<Figures*> &list) {
     list.push_back(new Rectangle(name, lowerLeftCornerCoordX, lowerLeftCornerCoordY, upperRightCornerCoordX, upperRightCornerCoordY));
 }
 
+void Menu::addPolygon(std::vector<Figures*> &list) {
+    std::string name;
+    std::cout << "Enter a name for your figure:\n";
+    std::cin >> name;
+    std::cout << "Enter how many vertices your figure will have:\n";
+    int numVertices = getIntValue();
+    if (numVertices < 3) {
+        throw BadAmountOfVertices(BAD_AMOUNT_OF_VERTICES);
+    }
+    std::cout << "Enter parameters for your figure:\n";
+    std::vector<Point*> coordinates;
+    for (int i = 0; i < numVertices; i++) {
+        auto* p = new Point;
+        p->x = getValue();
+        p->y = getValue();
+        coordinates.push_back(p);
+    }
+    list.push_back(new Polygon(name,coordinates));
+}
+
 void Menu::showFigures(std::vector<Figures*> &list) {
     unsigned counter = 1;
     if (list.empty()) {
-        throw EmptyListForShowing("The list of figures is empty. There is nothing to show");
+        throw EmptyListForShowing(EMPTY_LIST_FOR_SHOWING);
     }
     for (const auto& figure:list) {
         std::cout << counter << ". ";
@@ -117,7 +135,7 @@ void Menu::showFigures(std::vector<Figures*> &list) {
 void Menu::showPerimeters(std::vector<Figures*> &list) {
     unsigned counter = 1;
     if (list.empty()) {
-        throw EmptyListForShowing("The list of figures is empty. There is nothing to show");
+        throw EmptyListForShowing(EMPTY_LIST_FOR_SHOWING);
     }
     for (const auto& figure:list) {
         std::cout << counter << ". ";
@@ -128,7 +146,7 @@ void Menu::showPerimeters(std::vector<Figures*> &list) {
 
 void Menu::printSumOfPerimeters(std::vector<Figures*> &list) {
     if (list.empty()) {
-        throw EmptyListForSumming("The list of figures is empty. There is nothing to sum");
+        throw EmptyListForSumming(EMPTY_LIST_FOR_SUMMING);
     }
     double sum = 0;
     for (const auto& figure:list) {
@@ -139,7 +157,7 @@ void Menu::printSumOfPerimeters(std::vector<Figures*> &list) {
 
 void Menu::sortFiguresByPerimeter(std::vector<Figures*> &list) {
     if (list.empty()) {
-        throw EmptyListForSorting("The list of figures is empty. There is nothing to sort");
+        throw EmptyListForSorting(EMPTY_LIST_FOR_SORTING);
     }
     std::sort(list.begin(), list.end(), comparePerimeter);
     std::cout << "Figures have been sorted!: " << "\n";
@@ -151,12 +169,12 @@ bool comparePerimeter(Figures* f1, Figures* f2) {
 
 void Menu::deleteFigureByIndex(std::vector<Figures*> &list) {
     if (list.empty()) {
-        throw EmptyListForDeletion("The list of figures is empty.There is nothing to delete");
+        throw EmptyListForDeletion(EMPTY_LIST_FOR_DELETION);
     }
     std::cout << "Enter an index of a figure you want to delete(from 0): " << "\n";
     int index = getIntValue();
     if (index < 0 || index > list.size()) {
-        throw BadIndexForDeletion("There is no such index");
+        throw BadIndexForDeletion(BAD_LIST_INDEX);
     }
     delete list[index];
     list.erase(list.begin() + index);
@@ -165,7 +183,7 @@ void Menu::deleteFigureByIndex(std::vector<Figures*> &list) {
 
 void Menu::deleteFiguresByPerimeter(std::vector<Figures*> &list) {
     if (list.empty()) {
-        throw EmptyListForDeletion("The list of figures is empty.There is nothing to delete");
+        throw EmptyListForDeletion(EMPTY_LIST_FOR_DELETION);
     }
     std::cout << "Enter a value to delete figures with larger perimeters: " << "\n";
     double enteredValue = getValue();
@@ -195,6 +213,7 @@ void Menu::initializeFiguresOptions() {
     figuresOptions["Triangle"] = &Menu::addTriangle;
     figuresOptions["Circle"] = &Menu::addCircle;
     figuresOptions["Rectangle"] = &Menu::addRectangle;
+    figuresOptions["Polygon"] = &Menu::addPolygon;
 }
 
 double getValue()
@@ -206,7 +225,7 @@ double getValue()
     {
         std::cin.clear();
         std::cin.ignore(32767,'\n');
-        throw BadInputType("Incorrect value type");
+        throw BadInputType(BAD_VALUE_TYPE);
     } else {
         return value;
     }
@@ -221,7 +240,7 @@ int getIntValue()
     {
         std::cin.clear();
         std::cin.ignore(32767,'\n');
-        throw BadInputType("Incorrect value type");
+        throw BadInputType(BAD_VALUE_TYPE);
     } else {
         return value;
     }
