@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <iostream>
 #include "cmath"
+#include "Exceptions.h"
 #define _USE_MATH_DEFINES
 
 class Figures {

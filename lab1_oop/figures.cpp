@@ -3,7 +3,7 @@
 
 Circle::Circle(std::string n, double x, double y, double r) {
     if (r <= 0) {
-        //throw
+        throw FiguresException("Figure couldnt be created");
     }
     name = std::move(n);
     centerCoordinateX = x;
@@ -13,7 +13,7 @@ Circle::Circle(std::string n, double x, double y, double r) {
 
 Rectangle::Rectangle(std::string n, double x1, double y1, double x2, double y2) {
     if (x1 == x2 || y1 == y2) {
-        //throw
+        throw FiguresException("Figure couldnt be created");
     }
     name = std::move(n);
     lowerLeftCornerCoordX = x1;
@@ -23,7 +23,12 @@ Rectangle::Rectangle(std::string n, double x1, double y1, double x2, double y2) 
 }
 
 Triangle::Triangle(std::string n, double x1, double y1, double x2, double y2, double x3, double y3) {
-    //написать проверерку на правильность
+    double firstLine = sqrt(pow((firstCoordX - secondCoordX), 2) + pow((firstCoordY - secondCoordY), 2));
+    double secondLine = sqrt(pow((firstCoordX - thirdCoordX), 2) + pow((firstCoordY - thirdCoordY), 2));
+    double thirdLine = sqrt(pow((secondCoordX - thirdCoordX), 2) + pow((secondCoordY - thirdCoordY), 2));
+    if (firstLine >= secondLine + thirdLine || secondLine >= firstLine + thirdLine || thirdLine >= secondLine + firstLine) {
+        throw FiguresException("Figure couldnt be created");
+    }
     name = std::move(n);
     firstCoordX = x1;
     firstCoordY = y1;

@@ -9,6 +9,7 @@
 #include <iostream>
 #include "figures.h"
 #include <functional>
+#include "Exceptions.h"
 
 class Menu {
 public:
@@ -29,5 +30,8 @@ public:
     static void deleteFigureByIndex(std::vector<Figures*> &list);
     static void deleteFiguresByPerimeter(std::vector<Figures*> &list);
 };
+
+double getValue();
+int getIntValue();
 
 #endif //LAB1_OOP_MENU_H
