@@ -7,30 +7,62 @@
 #include <functional>
 #include <utility>
 #include "figures.h"
-#include "Exceptions.h"
-
+#include "FiguresException.h"
+#include "Circle.h"
+#include "Rectangle.h"
+#include "Polygon.h"
+#include "Triangle.h"
+#include "Point.h"
+#include "BadAmountOfVertices.h"
+#include "BadFigureName.h"
+#include "BadIndexForDeletion.h"
+#include "BadInputType.h"
+#include "EmptyListForDeletion.h"
+#include "EmptyListForShowing.h"
+#include "EmptyListForSorting.h"
+#include "EmptyListForSumming.h"
 class Menu {
+private:
+
+    using MethodPtr = void (Menu::*)();
+    void callMethod(const int& methodName);
+    void callFigureMethod(const int& methodName);
+
+    int exitMenu;
+    std::vector<Figures*> figures;
+    std::map<int, MethodPtr> menuOptions;
+    std::map<int, MethodPtr> figuresOptions;
+
+    void showMenu();
+    void addFigure();
+    void showFigures();
+    void showPerimeters();
+    void printSumOfPerimeters();
+    void sortFiguresByPerimeter();
+    void deleteFigureByIndex();
+    void deleteFiguresByPerimeter();
+    void initializeMenuOptions();
+    void initializeFiguresOptions();
+    void exitMenuReal();
+
+    void addTriangle();
+    void addCircle();
+    void addRectangle();
+    void addPolygon();
+
+    Circle* getCircle();
+    Triangle* getTriangle();
+    Rectangle* getRectangle();
+    Polygon* getPolygon();
+
+    template<typename T>
+    T getValue();
+    static bool comparePerimeter(Figures* f1, Figures* f2);
+
 public:
-    static std::map<std::string, std::function<void(std::vector<Figures*>&)>> menuOptions;
-    static std::map<std::string, std::function<void(std::vector<Figures*>&)>> figuresOptions;
-    static void initializeMenuOptions();
-    static void initializeFiguresOptions();
-    static void runMenu();
-    static void showMenu();
-    static void addFigure(std::vector<Figures*> &list);
-    static void addTriangle(std::vector<Figures*> &list);
-    static void addCircle(std::vector<Figures*> &list);
-    static void addRectangle(std::vector<Figures*> &list);
-    static void addPolygon(std::vector<Figures*> &list);
-    static void showFigures(std::vector<Figures*> &list);
-    static void showPerimeters(std::vector<Figures*> &list);
-    static void printSumOfPerimeters(std::vector<Figures*> &list);
-    static void sortFiguresByPerimeter(std::vector<Figures*> &list);
-    static void deleteFigureByIndex(std::vector<Figures*> &list);
-    static void deleteFiguresByPerimeter(std::vector<Figures*> &list);
+    void runMenu();
 };
 
-double getValue();
-int getIntValue();
+
 
 #endif //LAB1_OOP_MENU_H

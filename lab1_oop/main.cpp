@@ -1,7 +1,8 @@
 #include "menu.h"
 
 int main() {
-    Menu::runMenu();
+    Menu menu;
+    menu.runMenu();
 
     return 0;
 }
