@@ -5,9 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define LINE_MAX_LENGHT 100
+
 struct fileLine {
     int year;
-    char region[100];
+    char region[LINE_MAX_LENGHT];
     double naturalPopulationGrowth;
     double birthRate;
     double deathRate;
@@ -25,12 +27,7 @@ struct List {
 };
 
 List* init(fileLine line);
-void addLine(List* elem, fileLine line);
-void clear(List* list);
-
-void pushStart(List* list, fileLine line);
 void pushEnd(List* list, fileLine line);
-void handleLines(List* list, void(*handler)(fileLine*));
-void printHandler(fileLine* line);
+
 
 #endif // LIST_H

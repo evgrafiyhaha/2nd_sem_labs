@@ -7,9 +7,9 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    connect(ui->selectButton,&QPushButton::clicked,this,&MainWindow::on_selectFileButton_clicked);
-    connect(ui->loadDataButton,&QPushButton::clicked,this,&MainWindow::on_loadDataButton_clicked);
-    connect(ui->calculateMetricsButton,&QPushButton::clicked,this,&MainWindow::on_calculateMetricsButton_clicked);
+    connect(ui->selectButton, &QPushButton::clicked, this, &MainWindow::on_selectFileButton_clicked);
+    connect(ui->loadDataButton, &QPushButton::clicked, this, &MainWindow::on_loadDataButton_clicked);
+    connect(ui->calculateMetricsButton, &QPushButton::clicked, this, &MainWindow::on_calculateMetricsButton_clicked);
     doOperation(Initialization, &context, NULL);
     updateLabels();
 }
@@ -26,8 +26,7 @@ void MainWindow::on_selectFileButton_clicked() {
     const char* cStr = stdStr.c_str();
     strcpy(param.fileName, cStr);
 
-    doOperation(CopyFileName,&context, &param);
-    qDebug() << "param address: " << cStr;
+    doOperation(CopyFileName, &context, &param);
 }
 
 void MainWindow::on_loadDataButton_clicked() {
@@ -39,8 +38,37 @@ void MainWindow::on_loadDataButton_clicked() {
 
     doOperation(CopyRegion,&context,&param);
 
+    if (strcmp(context.fileName, "")) {
+        doOperation(Loading,&context, NULL);
+        if (context.table != NULL) {
+            setTable();
+        }
+    } else {
+        context.errorData = FileNotChosenError;
+    }
+
+    updateLabels();
+}
+
+void MainWindow::on_calculateMetricsButton_clicked() {
     if (strcmp(context.fileName,"")) {
-        doOperation(Loading,&context,NULL);
+        AppParams param;
+
+        std::string stdStrRegion = ui->regionLineEdit->text().toStdString();
+        const char* cStrRegion = stdStrRegion.c_str();
+        strcpy(param.region, cStrRegion);
+
+        std::string stdStrColumn = ui->columnNumLineEdit->text().toStdString();
+        const char* cStrColumn = stdStrColumn.c_str();
+        strcpy(param.column, cStrColumn);
+
+        doOperation(CopyRegion, &context, &param);
+        doOperation(CopyIndex, &context, &param);
+        if (context.table != NULL ) {
+            doOperation(Calculation, &context, NULL);
+        } else {
+            context.errorData = EmptyTableError;
+        }
     } else {
         context.errorData = FileNotChosenError;
     }
@@ -48,39 +76,6 @@ void MainWindow::on_loadDataButton_clicked() {
 }
 
 void MainWindow::updateLabels() {
-
-    if (context.table != NULL) {
-        ui->tableWidget->setRowCount(0);
-        ui->tableWidget->setColumnCount(7);
-        QStringList headers;
-        headers << "Year" << "Region" << "Natural Population Growth" << "Birth Rate" << "Death Rate" << "General Demographic Weight" << "Urbanisation";
-        ui->tableWidget->setHorizontalHeaderLabels(headers);
-
-        Node* current = context.table->first;
-        int row = 0;
-        if (!strcmp(context.region,"")) {
-            ui->tableWidget->setRowCount(context.numberOfSuccessLines);
-            while (current) {
-                setRow(current,row);
-                current = current->next;
-                ++row;
-            }
-        } else {
-            while (current) {
-                if (!strcmp(current->data.region,context.region)) {
-                    ui->tableWidget->insertRow(row);
-                    setRow(current,row);
-                    ++row;
-                }
-            current = current->next;
-            }
-        }
-        if (row != 0) {
-            ui->tableWidget->show();
-        } else {
-            context.errorData = ZeroRowsError;
-        }
-    }
     ui->minLabel->setText(QString::number(context.min));
     ui->maxLabel->setText(QString::number(context.max));
     ui->medianLabel->setText(QString::number(context.median));
@@ -88,32 +83,14 @@ void MainWindow::updateLabels() {
     ui->errorLinesLabel->setText(QString::number(context.numberOfErrorLines));
     ui->successLinesLabel->setText(QString::number(context.numberOfSuccessLines));
     errorCodeHandler();
-}
-
-void MainWindow::on_calculateMetricsButton_clicked() {
-    AppParams param;
-
-    std::string stdStrRegion = ui->regionLineEdit->text().toStdString();
-    const char* cStrRegion = stdStrRegion.c_str();
-    strcpy(param.region, cStrRegion);
-
-    std::string stdStrColumn = ui->columnNumLineEdit->text().toStdString();
-    const char* cStrColumn = stdStrColumn.c_str();
-    strcpy(param.column, cStrColumn);
-
-    doOperation(CopyRegion,&context,&param);
-    doOperation(CopyIndex,&context,&param);
-    if (context.table != NULL) {
-        doOperation(Calculation,&context,NULL);
-        updateLabels();
-    } else {
-        context.errorData = EmptyTableError;
-    }
+    context.min = DEFAULT_METRICS_VALUE;
+    context.max = DEFAULT_METRICS_VALUE;
+    context.median = DEFAULT_METRICS_VALUE;
 }
 
 void MainWindow::errorCodeHandler() {
     char* errorText = " ";
-    switch(context.errorData){
+    switch(context.errorData) {
     case NoErrors:
         errorText = NO_ERRORS;
         break;
@@ -138,6 +115,50 @@ void MainWindow::errorCodeHandler() {
     }
     ui->errorLabel->setText(errorText);
     context.errorData = NoErrors;
+}
+
+void MainWindow::setTable() {
+    ui->tableWidget->setRowCount(0);
+    ui->tableWidget->setColumnCount(7);
+
+    QStringList headers;
+    headers << "Year" << "Region" << "Natural Population Growth" << "Birth Rate" << "Death Rate" << "General Demographic Weight" << "Urbanisation";
+    ui->tableWidget->setHorizontalHeaderLabels(headers);
+
+    Node* current = context.table->first;
+    if (!strcmp(context.region, "")) {
+        setFullTable(current);
+    } else {
+        setRegionTable(current);
+    }
+}
+
+void MainWindow::setFullTable(Node* current) {
+    int row = 0;
+    ui->tableWidget->setRowCount(context.numberOfSuccessLines);
+    while (current) {
+        setRow(current, row);
+        current = current->next;
+        ++row;
+    }
+    if (row == 0) {
+        context.errorData = ZeroRowsError;
+    }
+}
+
+void MainWindow::setRegionTable(Node* current) {
+    int row = 0;
+    while (current) {
+        if (!strcmp(current->data.region, context.region)) {
+            ui->tableWidget->insertRow(row);
+            setRow(current,row);
+            ++row;
+        }
+        current = current->next;
+    }
+    if (row == 0) {
+        context.errorData = ZeroRowsError;
+    }
 }
 
 void MainWindow::setRow(Node* current,int row) {

@@ -13,9 +13,9 @@ struct AppContext {
     int numberOfErrorLines;
     int numberOfSuccessLines;
     List* table;
-    char fileName[100];
-    char region[100];
-    char column[100];
+    char fileName[LINE_MAX_LENGHT];
+    char region[LINE_MAX_LENGHT];
+    char column[LINE_MAX_LENGHT];
 };
 
 #endif // APPCONTEXT_H

@@ -13,12 +13,13 @@
 #include "errors.h"
 
 #define NO_ERRORS "No errors. yet"
-#define COLUMN_ERROR "Insufficient column number"
+#define COLUMN_ERROR "Insufficient column index"
 #define REGION_ERROR "Insufficient region name"
 #define FILE_NOT_CHOSEN_ERROR "File was not selected"
 #define ZERO_ROWS_ERROR "There is no such region"
 #define FILE_ERROR "File could not be opened"
 #define EMPTY_TABLE_ERROR "Table is empty. Nothing to calculate"
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -38,9 +39,14 @@ private slots:
     void on_selectFileButton_clicked();
     void on_loadDataButton_clicked();
     void on_calculateMetricsButton_clicked();
+
+    void setTable();
+    void setRow(Node* current,int row);
+    void setFullTable(Node* current);
+    void setRegionTable(Node* current);
+
     void updateLabels();
     void errorCodeHandler();
-    void setRow(Node* current,int row);
 
 private:
     Ui::MainWindow *ui;

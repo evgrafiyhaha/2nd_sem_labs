@@ -2,6 +2,9 @@
 
 void initialize(AppContext* context) {
     context->errorData = NoErrors;
+    context->max = DEFAULT_METRICS_VALUE;
+    context->min = DEFAULT_METRICS_VALUE;
+    context->median = DEFAULT_METRICS_VALUE;
 }
 
 void copyFileName(AppContext* context,char* fileName) {
@@ -21,11 +24,11 @@ void load(AppContext* context) {
     file = fopen(context->fileName, "r");
 
     if (file) {
-        char* fline = (char*)malloc(100);
-
+        char* fline = (char*)malloc(LINE_MAX_LENGHT);
         readline(file, fline);
         free(fline);
-        char* line = (char*)malloc(100);
+
+        char* line = (char*)malloc(LINE_MAX_LENGHT);
         int successRead = readline(file, line);
         fileLine firstLine;
         int numberOfLines = 0;
@@ -38,14 +41,15 @@ void load(AppContext* context) {
         }
         numberOfLines++;
         free(line);
+
         List* list = init(firstLine);
         while (!feof(file)) {
             fileLine currentLine;
-            char* line = (char*)malloc(100);
+            char* line = (char*)malloc(LINE_MAX_LENGHT);
             successRead += readline(file, line);
             if (addLineToStruct(line, &currentLine)) {
                 numberOfSuccessLines++;
-                pushEnd(list,currentLine);
+                pushEnd(list, currentLine);
             } else {
                 numberOfErrorLines++;
             }
@@ -71,26 +75,26 @@ void calculate(AppContext* context) {
         context->errorData = ColumnError;
     }
     if (doCalculate) {
-        int counter = countRegionAppear(context->table,context->region);
+        int counter = countRegionAppear(context->table, context->region);
         if (!counter) {
-            doCalculate = 0;
             context->errorData = RegionError;
         } else {
-            double min = findfirstAppearance(context->table,context->region,stringToInt(context->column));
-            double max = findfirstAppearance(context->table,context->region,stringToInt(context->column));
-            double median = findfirstAppearance(context->table,context->region,stringToInt(context->column));
-            calculateData(context->table,context->region,stringToInt(context->column),&min,&max,&median);
+            double min = findfirstAppearance(context->table, context->region, stringToInt(context->column));
+            double max = findfirstAppearance(context->table, context->region, stringToInt(context->column));
+            double* columnData = (double*)malloc(sizeof(double) * counter);
+            calculateData(context->table, context->region, stringToInt(context->column), &min, &max, columnData);
+            double median = findMedian(columnData, counter);
+            free(columnData);
             context->median = median;
             context->max = max;
             context->min = min;
         }
     }
-
 }
 
 int readline(FILE* stream, char* str) {
     int isSuccess = 0;
-    isSuccess += fgets(str, 100, stream) == NULL ? 0: 1;
+    isSuccess += fgets(str, LINE_MAX_LENGHT, stream) == NULL ? 0: 1;
     int len = strlen(str);
     if (str[len - 1] == '\n')
         str[len - 1] = '\0';
@@ -108,7 +112,7 @@ int addLineToStruct(char* str, fileLine* line) {
 
     token = strtok(NULL, ",");
     if (token != NULL && isSuccess != 0) {
-        strcpy(line->region,token);
+        strcpy(line->region, token);
     } else {
         isSuccess = 0;
     }
@@ -150,11 +154,10 @@ int addLineToStruct(char* str, fileLine* line) {
     return isSuccess;
 }
 
-
 int isInt(char* str) {
-    char *endptr;
+    char* endptr;
     int isInt = 0;
-    long intValue = strtol(str, &endptr, 10);
+    strtol(str, &endptr, 10);
 
     if (*endptr == '\0') {
         isInt = 1;
@@ -163,9 +166,9 @@ int isInt(char* str) {
 }
 
 int isDouble(char* str) {
-    char *endptr;
+    char* endptr;
     int isDouble = 0;
-    double doubleValue = strtod(str, &endptr);
+    strtod(str, &endptr);
 
     if (*endptr == '\0') {
         isDouble = 1;
@@ -182,14 +185,12 @@ double stringToDouble(char* string) {
     return atof(string);
 }
 
-int countRegionAppear(List* table,char* region) {
+int countRegionAppear(List* table, char* region) {
     Node* p = table->first;
     int counter = 0;
-    //if (p == NULL)
-    //    return;
 
     do {
-        if (strcmp(p->data.region,region)) {
+        if (!strcmp(p->data.region, region)) {
             counter++;
         }
         p = p->next;
@@ -197,15 +198,13 @@ int countRegionAppear(List* table,char* region) {
     return counter;
 }
 
-double findfirstAppearance(List* table,char* region, int column) {
+double findfirstAppearance(List* table, char* region, int column) {
     Node* p = table->first;
     double metric = 0;
-    //if (p == NULL)
-    //    return;
 
     do {
-        if (strcmp(p->data.region,region) == 0) {
-            metric = returnMetric(p,column);
+        if (strcmp(p->data.region, region) == 0) {
+            metric = returnField(p, column);
         }
         p = p->next;
     } while (p != NULL);
@@ -213,40 +212,68 @@ double findfirstAppearance(List* table,char* region, int column) {
 }
 
 
-double returnMetric(Node* p,int column) {
-    switch(column){
+double returnField(Node* p, int column) {
+    double field = 0;
+    switch(column) {
     case 3:
-        return p->data.naturalPopulationGrowth;
+        field = p->data.naturalPopulationGrowth;
         break;
     case 4:
-        return p->data.birthRate;
+        field = p->data.birthRate;
         break;
     case 5:
-        return p->data.deathRate;
+        field = p->data.deathRate;
         break;
     case 6:
-        return p->data.generalDemographicWeight;
+        field = p->data.generalDemographicWeight;
         break;
     case 7:
-        return p->data.urbanisation;
+        field = p->data.urbanisation;
         break;
     }
+    return field;
 }
 
-void calculateData(List* table,char* region, int column, double* min,double* max, double* median) {
+void calculateData(List* table,char* region, int column, double* min, double* max, double* columnData) {
     Node* p = table->first;
-    //if (p == NULL)
-    //    return;
+    int counter = 0;
 
     do {
-        if (strcmp(p->data.region,region) == 0) {
-            double metric = returnMetric(p,column);
+        if (strcmp(p->data.region, region) == 0) {
+            double metric = returnField(p, column);
             if (metric > *max) {
                 *max = metric;
             } else if (metric < *min) {
                 *min = metric;
             }
+            columnData[counter] = metric;
+            counter++;
         }
         p = p->next;
     } while (p != NULL);
+}
+
+double findMedian(double* columnData, int counter) {
+    sort(columnData, counter);
+    double median;
+
+    if (counter % 2 != 0) {
+        median = columnData[counter/2];
+    } else {
+        median = (columnData[counter/2 - 1]+columnData[counter/2]) / 2;
+    }
+    return median;
+}
+
+void swap(double* x, double* y) {
+    double temp = *x;
+    *x = *y;
+    *y = temp;
+}
+
+void sort(double arr[], int size) {
+    for (int i = 0; i < size - 1; i++)
+        for (int j = i + 1; j < size; j++)
+            if (*(arr + i) > *(arr + j))
+                swap(arr + i, arr + j);
 }
