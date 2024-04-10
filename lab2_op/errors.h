@@ -1,15 +1,15 @@
 #ifndef ERRORS_H
 #define ERRORS_H
 
-enum Errors{
+enum Error{
     NoErrors,
     FileError,
     ColumnError,
     RegionError,
-    FileNotChosenError,
+    EmptyFileNameError,
     ZeroRowsError,
-    EmptyTableError
-
+    EmptyTableError,
+    MemoryAllocationError
 };
 
 

@@ -7,9 +7,9 @@
 enum Operation {
     Initialization,
     Loading,
-    CopyFileName,
-    CopyRegion,
-    CopyIndex,
+    SetFileName,
+    SetRegion,
+    SetIndex,
     Calculation
 };
 

@@ -21,12 +21,14 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_selectFileButton_clicked() {
     AppParams param;
-    QString fileName = QFileDialog::getOpenFileName(this,tr("Выберите CSV файл"), "", tr("CSV файлы (*.csv);;Все файлы (*.*)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Выберите CSV файл"), "", tr("CSV файлы (*.csv);;Все файлы (*.*)"));
     std::string stdStr = fileName.toStdString();
     const char* cStr = stdStr.c_str();
     strcpy(param.fileName, cStr);
 
-    doOperation(CopyFileName, &context, &param);
+    doOperation(SetFileName, &context, &param);
+
+    ui->fileNameLabel->setText(context.fileName);
 }
 
 void MainWindow::on_loadDataButton_clicked() {
@@ -36,46 +38,36 @@ void MainWindow::on_loadDataButton_clicked() {
     const char* cStrRegion = stdStrRegion.c_str();
     strcpy(param.region, cStrRegion);
 
-    doOperation(CopyRegion,&context,&param);
+    doOperation(SetRegion,&context,&param);
 
-    if (strcmp(context.fileName, "")) {
-        doOperation(Loading,&context, NULL);
-        if (context.table != NULL) {
-            setTable();
-        }
-    } else {
-        context.errorData = FileNotChosenError;
-    }
+    doOperation(Loading,&context, NULL);
 
     updateLabels();
 }
 
 void MainWindow::on_calculateMetricsButton_clicked() {
-    if (strcmp(context.fileName,"")) {
-        AppParams param;
+    AppParams param;
 
-        std::string stdStrRegion = ui->regionLineEdit->text().toStdString();
-        const char* cStrRegion = stdStrRegion.c_str();
-        strcpy(param.region, cStrRegion);
+    std::string stdStrRegion = ui->regionLineEdit->text().toStdString();
+    const char* cStrRegion = stdStrRegion.c_str();
+    strcpy(param.region, cStrRegion);
 
-        std::string stdStrColumn = ui->columnNumLineEdit->text().toStdString();
-        const char* cStrColumn = stdStrColumn.c_str();
-        strcpy(param.column, cStrColumn);
+    std::string stdStrColumn = ui->columnNumLineEdit->text().toStdString();
+    const char* cStrColumn = stdStrColumn.c_str();
+    strcpy(param.column, cStrColumn);
 
-        doOperation(CopyRegion, &context, &param);
-        doOperation(CopyIndex, &context, &param);
-        if (context.table != NULL ) {
-            doOperation(Calculation, &context, NULL);
-        } else {
-            context.errorData = EmptyTableError;
-        }
-    } else {
-        context.errorData = FileNotChosenError;
-    }
+    doOperation(SetRegion, &context, &param);
+    doOperation(SetIndex, &context, &param);
+
+    doOperation(Calculation, &context, NULL);
+
     updateLabels();
 }
 
 void MainWindow::updateLabels() {
+    if (context.table != NULL) {
+        setTable();
+    }
     ui->minLabel->setText(QString::number(context.min));
     ui->maxLabel->setText(QString::number(context.max));
     ui->medianLabel->setText(QString::number(context.median));
@@ -83,9 +75,6 @@ void MainWindow::updateLabels() {
     ui->errorLinesLabel->setText(QString::number(context.numberOfErrorLines));
     ui->successLinesLabel->setText(QString::number(context.numberOfSuccessLines));
     errorCodeHandler();
-    context.min = DEFAULT_METRICS_VALUE;
-    context.max = DEFAULT_METRICS_VALUE;
-    context.median = DEFAULT_METRICS_VALUE;
 }
 
 void MainWindow::errorCodeHandler() {
@@ -103,7 +92,7 @@ void MainWindow::errorCodeHandler() {
     case RegionError:
         errorText = REGION_ERROR;
         break;
-    case FileNotChosenError:
+    case EmptyFileNameError:
         errorText = FILE_NOT_CHOSEN_ERROR;
         break;
     case ZeroRowsError:
@@ -112,9 +101,11 @@ void MainWindow::errorCodeHandler() {
     case EmptyTableError:
         errorText = EMPTY_TABLE_ERROR;
         break;
+    case MemoryAllocationError:
+        errorText = ALLOCATION_ERROR;
+        break;
     }
     ui->errorLabel->setText(errorText);
-    context.errorData = NoErrors;
 }
 
 void MainWindow::setTable() {
@@ -124,6 +115,7 @@ void MainWindow::setTable() {
     QStringList headers;
     headers << "Year" << "Region" << "Natural Population Growth" << "Birth Rate" << "Death Rate" << "General Demographic Weight" << "Urbanisation";
     ui->tableWidget->setHorizontalHeaderLabels(headers);
+    ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     Node* current = context.table->first;
     if (!strcmp(context.region, "")) {
@@ -141,9 +133,6 @@ void MainWindow::setFullTable(Node* current) {
         current = current->next;
         ++row;
     }
-    if (row == 0) {
-        context.errorData = ZeroRowsError;
-    }
 }
 
 void MainWindow::setRegionTable(Node* current) {
@@ -155,9 +144,6 @@ void MainWindow::setRegionTable(Node* current) {
             ++row;
         }
         current = current->next;
-    }
-    if (row == 0) {
-        context.errorData = ZeroRowsError;
     }
 }
 

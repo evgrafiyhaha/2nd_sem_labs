@@ -7,7 +7,7 @@
 
 #define LINE_MAX_LENGHT 100
 
-struct fileLine {
+struct FileLine {
     int year;
     char region[LINE_MAX_LENGHT];
     double naturalPopulationGrowth;
@@ -18,7 +18,7 @@ struct fileLine {
 };
 
 struct Node {
-    fileLine data;
+    FileLine data;
     Node* next;
 };
 
@@ -26,8 +26,9 @@ struct List {
     Node* first;
 };
 
-List* init(fileLine line);
-void pushEnd(List* list, fileLine line);
+List* init(FileLine line);
+void pushEnd(List* list, FileLine line);
+void deleteList(List* list);
 
 
 #endif // LIST_H

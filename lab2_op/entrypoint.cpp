@@ -8,14 +8,14 @@ void doOperation(Operation operation, AppContext* context, AppParams* params) {
     case Loading:
         load(context);
         break;
-    case CopyFileName:
-        copyFileName(context, params->fileName);
+    case SetFileName:
+        setFileName(context, params->fileName);
         break;
-    case CopyRegion:
-        copyRegion(context,params->region);
+    case SetRegion:
+        setRegion(context,params->region);
         break;
-    case CopyIndex:
-        copyIndex(context,params->column);
+    case SetIndex:
+        setIndex(context,params->column);
         break;
     case Calculation:
         calculate(context);

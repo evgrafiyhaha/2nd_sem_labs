@@ -1,7 +1,7 @@
 #include "list.h"
 
 
-List* init(fileLine line) {
+List* init(FileLine line) {
     Node* root = (Node*) malloc(sizeof(Node));
     root->data = line;
     root->next = NULL;
@@ -11,7 +11,7 @@ List* init(fileLine line) {
     return list;
 }
 
-void pushEnd(List* list, fileLine line) {
+void pushEnd(List* list, FileLine line) {
     Node* node = (Node*) malloc(sizeof(Node));
     node->data = line;
     node->next = NULL;
@@ -23,4 +23,14 @@ void pushEnd(List* list, fileLine line) {
             temp = temp->next;
         temp->next = node;
     }
+}
+
+void deleteList(List* list) {
+    Node* p = list->first;
+    while (p->next) {
+        Node* temp = p;
+        p = p->next;
+        free(temp);
+    }
+    free(list);
 }

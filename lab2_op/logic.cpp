@@ -5,90 +5,161 @@ void initialize(AppContext* context) {
     context->max = DEFAULT_METRICS_VALUE;
     context->min = DEFAULT_METRICS_VALUE;
     context->median = DEFAULT_METRICS_VALUE;
+    context->numberOfErrorLines = DEFAULT_METRICS_VALUE;
+    context->numberOfSuccessLines = DEFAULT_METRICS_VALUE;
+    context->numberOfLines = DEFAULT_METRICS_VALUE;
+    strcpy(context->fileName,"");
+    context->table = NULL;
 }
 
-void copyFileName(AppContext* context,char* fileName) {
-    strcpy(context->fileName,fileName);
+void setFileName(AppContext* context,char* fileName) {
+    strcpy(context->fileName, fileName);
+    context->numberOfErrorLines = DEFAULT_METRICS_VALUE;
+    context->numberOfSuccessLines = DEFAULT_METRICS_VALUE;
+    context->numberOfLines = DEFAULT_METRICS_VALUE;
 }
 
-void copyRegion(AppContext* context, char* region) {
-    strcpy(context->region,region);
+void setRegion(AppContext* context, char* region) {
+    strcpy(context->region, region);
 }
 
-void copyIndex(AppContext* context, char* column) {
-    strcpy(context->column,column);
+void setIndex(AppContext* context, char* column) {
+    strcpy(context->column, column);
 }
 
 void load(AppContext* context) {
-    FILE *file;
-    file = fopen(context->fileName, "r");
 
-    if (file) {
-        char* fline = (char*)malloc(LINE_MAX_LENGHT);
-        readline(file, fline);
-        free(fline);
+    if (!strcmp(context->fileName, "")) {
+        context->errorData = EmptyFileNameError;
+    } else {
+        FILE *file;
+        file = fopen(context->fileName, "r");
 
-        char* line = (char*)malloc(LINE_MAX_LENGHT);
-        int successRead = readline(file, line);
-        fileLine firstLine;
-        int numberOfLines = 0;
-        int numberOfErrorLines = 0;
-        int numberOfSuccessLines = 0;
-        if (addLineToStruct(line, &firstLine)) {
-            numberOfSuccessLines++;
+        if (file) {
+            char* fline = (char*)malloc(LINE_MAX_LENGHT);
+            if (fline == NULL) {
+                context->errorData = MemoryAllocationError;
+            } else {
+
+                readline(file, fline);
+                free(fline);
+
+                char* line = (char*)malloc(LINE_MAX_LENGHT);
+                if (line == NULL) {
+                    context->errorData = MemoryAllocationError;
+                } else {
+                    int successRead = readline(file, line);
+                    FileLine firstLine;
+                    int numberOfLines = 0;
+                    int numberOfErrorLines = 0;
+                    int numberOfSuccessLines = 0;
+                    if (successRead && addLineToStruct(line, &firstLine)) {
+                        numberOfSuccessLines++;
+                    } else {
+                        numberOfErrorLines++;
+                    }
+                    numberOfLines++;
+                    free(line);
+                    int freeList = 0;
+                    List* list = init(firstLine);
+                    fillList(file, list, context, &freeList, &numberOfSuccessLines, &numberOfErrorLines, &numberOfLines);
+                    if (!freeList) {
+                        context->table = list;
+                        context->numberOfErrorLines = numberOfErrorLines;
+                        context->numberOfLines = numberOfLines;
+                        context->numberOfSuccessLines = numberOfSuccessLines;
+                        context->errorData = NoErrors;
+                    } else {
+                        deleteList(list);
+                    }
+                }
+            }
+            fclose(file);
         } else {
-            numberOfErrorLines++;
+            context->errorData = FileError;
         }
-        numberOfLines++;
-        free(line);
+    }
 
-        List* list = init(firstLine);
-        while (!feof(file)) {
-            fileLine currentLine;
-            char* line = (char*)malloc(LINE_MAX_LENGHT);
-            successRead += readline(file, line);
-            if (addLineToStruct(line, &currentLine)) {
-                numberOfSuccessLines++;
+}
+
+void fillList(FILE* file, List* list, AppContext* context, int* freeList, int* numberOfSuccessLines, int* numberOfErrorLines, int* numberOfLines) {
+    while (!feof(file)) {
+        FileLine currentLine;
+        char* line = (char*)malloc(LINE_MAX_LENGHT);
+        if (line == NULL) {
+            context->errorData = MemoryAllocationError;
+            *freeList = 1;
+            break;
+        } else {
+            int successRead = readline(file, line);
+            if (successRead && addLineToStruct(line, &currentLine)) {
+                *numberOfSuccessLines+=1;
                 pushEnd(list, currentLine);
             } else {
-                numberOfErrorLines++;
+                *numberOfErrorLines+=1;
             }
-            numberOfLines++;
+            *numberOfLines+=1;
             free(line);
         }
-
-        context->table = list;
-        context->numberOfErrorLines = numberOfErrorLines;
-        context->numberOfLines = numberOfLines;
-        context->numberOfSuccessLines = numberOfSuccessLines;
-
-        fclose(file);
-    } else {
-        context->errorData = FileError;
     }
 }
 
 void calculate(AppContext* context) {
-    int doCalculate = 1;
-    if (!isInt(context->column) ||(isInt(context->column) && (stringToInt(context->column) > 7 || stringToInt(context->column) < 3))){
-        doCalculate = 0;
-        context->errorData = ColumnError;
-    }
-    if (doCalculate) {
-        int counter = countRegionAppear(context->table, context->region);
-        if (!counter) {
-            context->errorData = RegionError;
+
+    if (strcmp(context->fileName,"")) {
+        if (context->table != NULL ) {
+            int doCalculate = 1;
+            if (!isInt(context->column) ||(isInt(context->column) && (stringToInt(context->column) > 7 || (stringToInt(context->column) < 3 && stringToInt(context->column) != 1)))){
+                doCalculate = 0;
+                context->errorData = ColumnError;
+                context->min = DEFAULT_METRICS_VALUE;
+                context->max = DEFAULT_METRICS_VALUE;
+                context->median = DEFAULT_METRICS_VALUE;
+            }
+            if (doCalculate) {
+                if (!strcmp(context->region,"")) {
+                    double* columnData = (double*)malloc(sizeof(double) * context->numberOfSuccessLines);
+                    double min = returnField(context->table->first, stringToInt(context->column));
+                    double max = min;
+                    calculateData(context->table, context->region, stringToInt(context->column), &min, &max, columnData);
+                    double median = findMedian(columnData, context->numberOfSuccessLines);
+                    free(columnData);
+                    context->median = median;
+                    context->max = max;
+                    context->min = min;
+                    context->errorData = NoErrors;
+                } else {
+                    int counter = countRegionAppear(context->table, context->region);
+                    if (!counter) {
+                        context->errorData = RegionError;
+                        context->min = DEFAULT_METRICS_VALUE;
+                        context->max = DEFAULT_METRICS_VALUE;
+                        context->median = DEFAULT_METRICS_VALUE;
+                    } else {
+                        double min = findfirstAppearance(context->table, context->region, stringToInt(context->column));
+                        double max = findfirstAppearance(context->table, context->region, stringToInt(context->column));
+                        double* columnData = (double*)malloc(sizeof(double) * counter);
+                        calculateData(context->table, context->region, stringToInt(context->column), &min, &max, columnData);
+                        double median = findMedian(columnData, counter);
+                        free(columnData);
+                        context->median = median;
+                        context->max = max;
+                        context->min = min;
+                        context->errorData = NoErrors;
+                    }
+                }
+            }
         } else {
-            double min = findfirstAppearance(context->table, context->region, stringToInt(context->column));
-            double max = findfirstAppearance(context->table, context->region, stringToInt(context->column));
-            double* columnData = (double*)malloc(sizeof(double) * counter);
-            calculateData(context->table, context->region, stringToInt(context->column), &min, &max, columnData);
-            double median = findMedian(columnData, counter);
-            free(columnData);
-            context->median = median;
-            context->max = max;
-            context->min = min;
+            context->errorData = EmptyTableError;
+            context->min = DEFAULT_METRICS_VALUE;
+            context->max = DEFAULT_METRICS_VALUE;
+            context->median = DEFAULT_METRICS_VALUE;
         }
+    } else {
+        context->errorData = EmptyFileNameError;
+        context->min = DEFAULT_METRICS_VALUE;
+        context->max = DEFAULT_METRICS_VALUE;
+        context->median = DEFAULT_METRICS_VALUE;
     }
 }
 
@@ -101,7 +172,7 @@ int readline(FILE* stream, char* str) {
     return isSuccess;
 }
 
-int addLineToStruct(char* str, fileLine* line) {
+int addLineToStruct(char* str, FileLine* line) {
     int isSuccess = 1;
     char* token = strtok(str, ",");
     if (token != NULL && isInt(token)) {
@@ -111,42 +182,42 @@ int addLineToStruct(char* str, fileLine* line) {
     }
 
     token = strtok(NULL, ",");
-    if (token != NULL && isSuccess != 0) {
+    if (token != NULL && isSuccess) {
         strcpy(line->region, token);
     } else {
         isSuccess = 0;
     }
 
     token = strtok(NULL, ",");
-    if (token != NULL && isSuccess != 0 && isDouble(token)) {
+    if (token != NULL && isSuccess && isDouble(token)) {
         line->naturalPopulationGrowth = stringToDouble(token);
     } else {
         isSuccess = 0;
     }
 
     token = strtok(NULL, ",");
-    if (token != NULL && isSuccess != 0 && isDouble(token)) {
+    if (token != NULL && isSuccess && isDouble(token)) {
         line->birthRate = stringToDouble(token);
     } else {
         isSuccess = 0;
     }
 
     token = strtok(NULL, ",");
-    if (token != NULL && isSuccess != 0 && isDouble(token)) {
+    if (token != NULL && isSuccess && isDouble(token)) {
         line->deathRate = stringToDouble(token);
     } else {
         isSuccess = 0;
     }
 
     token = strtok(NULL, ",");
-    if (token != NULL && isSuccess != 0 && isDouble(token)) {
+    if (token != NULL && isSuccess && isDouble(token)) {
         line->generalDemographicWeight = stringToDouble(token);
     } else {
         isSuccess = 0;
     }
 
     token = strtok(NULL, ",");
-    if (token != NULL && isSuccess != 0 && isDouble(token)) {
+    if (token != NULL && isSuccess && isDouble(token)) {
         line->urbanisation = stringToDouble(token);
     } else {
         isSuccess = 0;
@@ -215,6 +286,9 @@ double findfirstAppearance(List* table, char* region, int column) {
 double returnField(Node* p, int column) {
     double field = 0;
     switch(column) {
+    case 1:
+        field = p->data.year;
+        break;
     case 3:
         field = p->data.naturalPopulationGrowth;
         break;
@@ -239,7 +313,7 @@ void calculateData(List* table,char* region, int column, double* min, double* ma
     int counter = 0;
 
     do {
-        if (strcmp(p->data.region, region) == 0) {
+        if (strcmp(p->data.region, region) == 0 || strcmp("", region) == 0) {
             double metric = returnField(p, column);
             if (metric > *max) {
                 *max = metric;

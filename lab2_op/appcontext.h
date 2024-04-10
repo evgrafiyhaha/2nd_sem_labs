@@ -8,7 +8,7 @@ struct AppContext {
     double min;
     double max;
     double median;
-    Errors errorData;
+    Error errorData;
     int numberOfLines;
     int numberOfErrorLines;
     int numberOfSuccessLines;

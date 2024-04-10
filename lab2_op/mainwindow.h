@@ -19,6 +19,7 @@
 #define ZERO_ROWS_ERROR "There is no such region"
 #define FILE_ERROR "File could not be opened"
 #define EMPTY_TABLE_ERROR "Table is empty. Nothing to calculate"
+#define ALLOCATION_ERROR "Memory could not be allocated"
 
 
 QT_BEGIN_NAMESPACE

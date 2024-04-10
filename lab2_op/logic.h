@@ -16,12 +16,12 @@ void initialize(AppContext* context);
 void load(AppContext* context);
 void calculate(AppContext* context);
 
-void copyFileName(AppContext* context, char* fileName);
-void copyRegion(AppContext* context, char* region);
-void copyIndex(AppContext* context, char* column);
+void setFileName(AppContext* context, char* fileName);
+void setRegion(AppContext* context, char* region);
+void setIndex(AppContext* context, char* column);
 
 int readline(FILE* stream, char* str);
-int addLineToStruct(char* str, fileLine* line);
+int addLineToStruct(char* str, FileLine* line);
 
 void calculateData(List* table,char* region, int column, double* min, double* max, double* columnData);
 double findMedian(double* columnData, int counter);
@@ -30,6 +30,7 @@ int countRegionAppear(List* table, char* region);
 double returnField(Node* p, int column);
 double findfirstAppearance(List* table, char* region, int column);
 
+void fillList(FILE* file, List* list, AppContext* context, int* freeList, int* numberOfSuccessLines, int* numberOfErrorLines, int* numberOfLines);
 int isInt(char* str);
 int isDouble(char* str);
 int stringToInt(char* string);
