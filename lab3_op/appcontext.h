@@ -8,6 +8,7 @@ struct AppContext {
     double min;
     double max;
     double median;
+    int cellSize = 20;
     Error errorData;
     int numberOfLines;
     int numberOfErrorLines;

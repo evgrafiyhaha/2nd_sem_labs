@@ -12,6 +12,7 @@
 #include "entrypoint.h"
 #include "list.h"
 #include "errors.h"
+#include <QResizeEvent>
 
 #define NO_ERRORS "No errors. yet"
 #define COLUMN_ERROR "Insufficient column index"
@@ -48,9 +49,10 @@ private slots:
     void setRegionTable(Node* current);
 
     void setGraphic();
-    void drawOY(QGraphicsScene *scene, int cellSize);
-    void drawGraphe(QGraphicsScene *scene, int cellSize);
+    void drawOY(QGraphicsScene *scene);
+    void drawGraphe(QGraphicsScene *scene);
     double getField(Node* p, int column);
+    void resizeEvent(QResizeEvent* event) override;
 
     void updateLabels();
     void errorCodeHandler();

@@ -60,7 +60,7 @@ void MainWindow::on_calculateMetricsButton_clicked() {
     doOperation(SetIndex, &context, &param);
 
     doOperation(Calculation, &context, NULL);
-    if (context.errorData == NoErrors) {
+    if (context.errorData == NoErrors && strcmp(context.region,"")) {
         setGraphic();
     }
     updateLabels();
@@ -186,53 +186,78 @@ void MainWindow::setGraphic() {
     QGraphicsScene *scene = new QGraphicsScene(this);
     ui->graphicsView->setScene(scene);
 
-    int cellSize = 40;
-    int width = 50*cellSize;
-    int height = 55*cellSize;
+    int modif = 1;
+    if (atoi(context.column) > 5) {
+        modif = 10;
+    }
 
-    scene->setSceneRect(-8*cellSize, -30 *cellSize, width, height);
+    int extraLenth = 0;
+    if (context.min < 0) {
+        extraLenth = -context.min;
+    }
+    while(true) {
+        if (context.cellSize * (context.max+extraLenth+4)/modif > ui->graphicsView->height() || context.cellSize * (2017-1990+1+4) > ui->graphicsView->width()) {
+            context.cellSize--;
+        } else {
+            break;
+        }
+    }
+    while(true) {
+        if (context.cellSize * (context.max+extraLenth+4)/modif > ui->graphicsView->height() || context.cellSize * (2017-1990+1+4) > ui->graphicsView->width()) {
+            context.cellSize--;
+            break;
+        } else {
+            context.cellSize++;
+        }
+    }
+    drawOY(scene);
 
-    drawOY(scene,cellSize);
 
-    drawGraphe(scene,cellSize);
+    drawGraphe(scene);
 }
 
-void MainWindow::drawOY(QGraphicsScene *scene, int cellSize) {
+void MainWindow::drawOY(QGraphicsScene *scene) {
     QPen yAxisPen(Qt::white);
     int modif = 1;
     int yCounter = 1;
-    int yColumnLength = 30;
-    double yPointCoordHigher = 25.25;
+    int yColumnLength = round(context.max)+1;
+    double yPointCoordHigher = -(round(context.max)-4);
     double yPointCoordLower = 5;
     if (atoi(context.column) > 5) {
         modif *= 10;
         yCounter*=modif;
         yColumnLength = 10;
-        yPointCoordHigher = 5.25;
+        yPointCoordHigher = -5.25;
     }
+
     if (context.min < 0) {
-        yCounter*=-15;
-        yPointCoordLower += 15;
+        yCounter*=+floor(context.min);
+        yPointCoordLower -= floor(context.min);
+        yColumnLength = 0;
     }
-    scene->addLine(-5*cellSize, yPointCoordLower*cellSize, -5*cellSize, -yPointCoordHigher * cellSize, yAxisPen);
+
+    if (context.max < 0){
+        yPointCoordHigher = 5;
+    }
+    scene->addLine(-5*context.cellSize, yPointCoordLower*context.cellSize, -5*context.cellSize, yPointCoordHigher * context.cellSize, yAxisPen);
 
     for (; yCounter <= yColumnLength*modif; yCounter += modif) {
-        QGraphicsEllipseItem *markerY = new QGraphicsEllipseItem(0, 0, 10, 10);
+        QGraphicsEllipseItem *markerY = new QGraphicsEllipseItem(0, 0, context.cellSize/4, context.cellSize/4);
         markerY->setBrush(Qt::white);
-        markerY->setPos(-5*cellSize - 5,5*cellSize - yCounter/modif * cellSize);
+        markerY->setPos(-5*context.cellSize - context.cellSize/8,5*context.cellSize - yCounter/modif * context.cellSize);
         scene->addItem(markerY);
 
         QGraphicsTextItem *textItemY = scene->addText(QString::number(yCounter));
-        textItemY->setPos(-5*cellSize - 30,5*cellSize - yCounter/modif * cellSize);
+        textItemY->setPos(-6*context.cellSize,5*context.cellSize - yCounter/modif * context.cellSize);
     }
 
     QGraphicsTextItem *textValueItem = scene->addText("Value:");
-    textValueItem->setPos(-5*cellSize - 50, -yPointCoordHigher * cellSize - 20);
+    textValueItem->setPos(-6*context.cellSize,  (yPointCoordHigher - 1) * (context.cellSize));
 }
 
-void MainWindow::drawGraphe(QGraphicsScene *scene, int cellSize) {
+void MainWindow::drawGraphe(QGraphicsScene *scene) {
     QPen xAxisPen(Qt::white);
-    scene->addLine(-5*cellSize, 5*cellSize, 25*cellSize, 5*cellSize, xAxisPen);
+    scene->addLine(-5*context.cellSize, 5*context.cellSize, 25*context.cellSize, 5*context.cellSize, xAxisPen);
 
     Node* current = context.table->first;
     double prevX, prevY;
@@ -243,43 +268,43 @@ void MainWindow::drawGraphe(QGraphicsScene *scene, int cellSize) {
         modif *= 10;
     }
 
-    for (int x = -4*cellSize; x <= 23*cellSize; x += cellSize) {
+    for (int x = -4*context.cellSize; x <= 23*context.cellSize; x += context.cellSize) {
 
-        int year = 1989 + (5*cellSize + x) / cellSize;
+        int year = 1990 + (4*context.cellSize + x) / context.cellSize;
         QGraphicsTextItem *textItem = scene->addText(QString::number(year));
-        textItem->setPos(x, 4.5*cellSize);
+        textItem->setPos(x, 4.5*context.cellSize);
 
-        QGraphicsEllipseItem *marker = new QGraphicsEllipseItem(0, 0, 10, 10);
+        QGraphicsEllipseItem *marker = new QGraphicsEllipseItem(0, 0, context.cellSize/4, context.cellSize/4);
         marker->setBrush(Qt::white);
-        marker->setPos(x-5,5*cellSize-5);
+        marker->setPos(x-context.cellSize/8,5*context.cellSize-context.cellSize/8);
         scene->addItem(marker);
 
         while (current) {
             if (!strcmp(current->data.region, context.region)) {
                 if (current->data.year == year) {
-                    double y = 5*cellSize - getField(current,atoi(context.column))/modif * cellSize;
+                    double y = 5*context.cellSize - getField(current,atoi(context.column))/modif * context.cellSize;
                     if (isFirst) {
                         prevX = x;
                         prevY = y;
                         isFirst = 0;
                     }
-                    QGraphicsEllipseItem *dataMarker = new QGraphicsEllipseItem(0, 0, 10, 10);
+                    QGraphicsEllipseItem *dataMarker = new QGraphicsEllipseItem(0, 0, context.cellSize/4, context.cellSize/4);
                     if (getField(current,atoi(context.column)) == context.min) {
                         dataMarker->setBrush(Qt::blue);
                     } else if (getField(current,atoi(context.column)) == context.max) {
                         dataMarker->setBrush(Qt::yellow);
-                    } else {
+                    }  else {
                         dataMarker->setBrush(Qt::red);
                     }
                     scene->addLine(x, y, prevX, prevY, QPen(Qt::red));
-                    dataMarker->setPos(x-5,y-5);
+                    dataMarker->setPos(x-context.cellSize/8,y-context.cellSize/8);
                     scene->addItem(dataMarker);
 
                     prevX = x;
                     prevY = y;
 
                     QGraphicsTextItem *dataTextItem = scene->addText(QString::number(getField(current,atoi(context.column))));
-                    dataTextItem->setPos(x - 20, y);
+                    dataTextItem->setPos(x - context.cellSize/2, y);
 
                     current = current->next;
                 }
@@ -288,5 +313,13 @@ void MainWindow::drawGraphe(QGraphicsScene *scene, int cellSize) {
                 current = current->next;
             }
         }
+    }
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event) {
+    QMainWindow::resizeEvent(event);
+
+    if (context.errorData == NoErrors && strcmp(context.region,"")) {
+        setGraphic();
     }
 }
