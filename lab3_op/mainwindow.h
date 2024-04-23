@@ -49,10 +49,11 @@ private slots:
     void setRegionTable(Node* current);
 
     void setGraphic();
-    void drawOY(QGraphicsScene *scene);
-    void drawGraphe(QGraphicsScene *scene);
+    void drawOY(QGraphicsScene *scene, int OYxValue, int OXyValue);
+    void drawOXAndGraphic(QGraphicsScene *scene, int OYxValue, int OXyValue);
     double getField(Node* p, int column);
     void resizeEvent(QResizeEvent* event) override;
+    Node* drawGraphic(QGraphicsScene *scene, Node* current, int year, int x, int modif, int OXyValue, int* isFirst, double* prevX, double* prevY);
 
     void updateLabels();
     void errorCodeHandler();
