@@ -8,11 +8,13 @@
 #include <QStandardItemModel>
 #include <QGraphicsTextItem>
 #include <string.h>
+#include <QResizeEvent>
+
 #include "appcontext.h"
 #include "entrypoint.h"
 #include "list.h"
 #include "errors.h"
-#include <QResizeEvent>
+
 
 #define NO_ERRORS "No errors. yet"
 #define COLUMN_ERROR "Insufficient column index"
@@ -55,9 +57,10 @@ private slots:
     void setGraphic();
     void drawOY(QGraphicsScene *scene, int OYxValue, int OXyValue);
     void drawOXAndGraphic(QGraphicsScene *scene, int OYxValue, int OXyValue);
+    Node* drawGraphic(QGraphicsScene *scene, Node* current, int year, int x, int OXyValue, int* isFirst, double* prevX, double* prevY);
+
     double getField(Node* p, int column);
     void resizeEvent(QResizeEvent* event) override;
-    Node* drawGraphic(QGraphicsScene *scene, Node* current, int year, int x, int OXyValue, int* isFirst, double* prevX, double* prevY);
     double findScale();
     int findMinYear();
     int findMaxYear();

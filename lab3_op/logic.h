@@ -1,12 +1,13 @@
 #ifndef LOGIC_H
 #define LOGIC_H
 
-#include "appcontext.h"
 #include <string.h>
 #include <cstdlib>
 #include <cstdio>
 #include <cctype>
 #include <cmath>
+
+#include "appcontext.h"
 #include "list.h"
 #include "errors.h"
 
