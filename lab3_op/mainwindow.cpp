@@ -161,21 +161,25 @@ void MainWindow::setRow(Node* current, int row) {
 
 
 double MainWindow::getField(Node* p, int column) {
+    column--;
     double field = 0;
     switch(column) {
-    case 3:
+    case Year:
+        field = p->data.year;
+        break;
+    case NaturalPopulationGrowth:
         field = p->data.naturalPopulationGrowth;
         break;
-    case 4:
+    case BirthRate:
         field = p->data.birthRate;
         break;
-    case 5:
+    case DeathRate:
         field = p->data.deathRate;
         break;
-    case 6:
+    case GeneralDemographicWeight:
         field = p->data.generalDemographicWeight;
         break;
-    case 7:
+    case Urbanisation:
         field = p->data.urbanisation;
         break;
     }
@@ -186,25 +190,15 @@ void MainWindow::setGraphic() {
     QGraphicsScene *scene = new QGraphicsScene(this);
     ui->graphicsView->setScene(scene);
 
-    int modif = 1;
-    if (atoi(context.column) > 5) {
-        modif = 10;
-    }
-
-    int extraLenth = 0;
-    if (context.min < 0) {
-        extraLenth = -context.min;
-    }
-
     while(true) {
-        if (context.cellSize * (context.max+extraLenth+4)/modif > ui->graphicsView->height() || context.cellSize * (2017-1990+1+4) > ui->graphicsView->width()) {
+        if (context.cellSize * (OY_LENGTH + SPACER) > ui->graphicsView->height() || context.cellSize * (findMaxYear() - findMinYear() + 1 + SPACER) > ui->graphicsView->width()) {
             context.cellSize--;
         } else {
             break;
         }
     }
     while(true) {
-        if (context.cellSize * (context.max+extraLenth+4)/modif > ui->graphicsView->height() || context.cellSize * (2017-1990+1+4) > ui->graphicsView->width()) {
+        if (context.cellSize * (OY_LENGTH + SPACER) > ui->graphicsView->height() || context.cellSize * (findMaxYear() - findMinYear() + 1 + SPACER) > ui->graphicsView->width()) {
             context.cellSize--;
             break;
         } else {
@@ -222,39 +216,27 @@ void MainWindow::setGraphic() {
 void MainWindow::drawOY(QGraphicsScene *scene, int OYxValue, int OXyValue) {
 
     QPen yAxisPen(Qt::white);
-    int modif = 1;
-    int yCounter = 1;
-    int OYMax = round(context.max)+1;
-    double yPointCoordHigher = -(round(context.max)-4);
+    double yPointCoordHigher = -10;
     double yPointCoordLower = 5;
 
-    if (atoi(context.column) > 5) {
-        modif *= 10;
-        yCounter*=modif;
-        OYMax = 10;
-        yPointCoordHigher = -5;
-    }
+    scene->addLine(OYxValue, yPointCoordLower * context.cellSize, OYxValue, yPointCoordHigher * context.cellSize, yAxisPen);
+    double mstb = (yPointCoordHigher - yPointCoordLower) / OY_NUMBER_OF_POINTS * context.cellSize;
+    double scale = findScale();
 
-    if (context.min < 0) {
-        yCounter*=+floor(context.min);
-        yPointCoordLower -= floor(context.min);
-        OYMax = 0;
-    }
+    double yCounter = context.min;
+    int yCurr = OXyValue;
 
-    if (context.max < 0) {
-        yPointCoordHigher = 5;
-    }
-
-    scene->addLine(OYxValue, yPointCoordLower*context.cellSize, OYxValue, yPointCoordHigher * context.cellSize, yAxisPen);
-
-    for (; yCounter <= OYMax*modif; yCounter += modif) {
+    for (int y = 0; y <= OY_NUMBER_OF_POINTS; y++) {
         QGraphicsEllipseItem *markerY = new QGraphicsEllipseItem(0, 0, context.cellSize/4, context.cellSize/4);
         markerY->setBrush(Qt::white);
-        markerY->setPos(OYxValue - context.cellSize/8, OXyValue - yCounter/modif * context.cellSize);
+        markerY->setPos(OYxValue - context.cellSize/8, yCurr);
         scene->addItem(markerY);
 
         QGraphicsTextItem *textItemY = scene->addText(QString::number(yCounter));
-        textItemY->setPos(OYxValue - context.cellSize, OXyValue - yCounter/modif * context.cellSize);
+        textItemY->setPos(OYxValue - context.cellSize, yCurr);
+
+        yCurr += mstb;
+        yCounter += scale;
     }
 
     QGraphicsTextItem *textValueItem = scene->addText("Values:");
@@ -263,8 +245,9 @@ void MainWindow::drawOY(QGraphicsScene *scene, int OYxValue, int OXyValue) {
 
 void MainWindow::drawOXAndGraphic(QGraphicsScene *scene, int OYxValue, int OXyValue) {
 
+    int OXMaxValue = (findMaxYear() - findMinYear() - 4) * context.cellSize;
     QPen xAxisPen(Qt::white);
-    scene->addLine(OYxValue, OXyValue, 23*context.cellSize, OXyValue, xAxisPen);
+    scene->addLine(OYxValue, OXyValue, OXMaxValue, OXyValue, xAxisPen);
 
     QGraphicsTextItem *textValueItem = scene->addText("Years:");
     textValueItem->setPos(OYxValue - context.cellSize,  OXyValue + context.cellSize/4);
@@ -272,24 +255,19 @@ void MainWindow::drawOXAndGraphic(QGraphicsScene *scene, int OYxValue, int OXyVa
     Node* current = context.table->first;
     double prevX, prevY;
     int isFirst = 1;
-    int modif = 1;
 
-    if (atoi(context.column) > 5) {
-        modif *= 10;
-    }
+    for (int x = OYxValue + context.cellSize; x <= OXMaxValue; x += context.cellSize) {
 
-    for (int x = OYxValue + context.cellSize; x <= 23*context.cellSize; x += context.cellSize) {
-
-        int year = 1990 + (4*context.cellSize + x) / context.cellSize;
+        int year = findMinYear() + (4 * context.cellSize + x) / context.cellSize;
         QGraphicsTextItem *textItem = scene->addText(QString::number(year));
-        textItem->setPos(x, 4.5*context.cellSize);
+        textItem->setPos(x, 4.5 * context.cellSize);
 
         QGraphicsEllipseItem *marker = new QGraphicsEllipseItem(0, 0, context.cellSize/4, context.cellSize/4);
         marker->setBrush(Qt::white);
-        marker->setPos(x-context.cellSize/8, OXyValue - context.cellSize/8);
+        marker->setPos(x - context.cellSize/8, OXyValue - context.cellSize/8);
         scene->addItem(marker);
 
-        current = drawGraphic(scene, current, year, x, modif, OXyValue, &isFirst, &prevX, &prevY);
+        current = drawGraphic(scene, current, year, x, OXyValue, &isFirst, &prevX, &prevY);
     }
 }
 
@@ -301,32 +279,35 @@ void MainWindow::resizeEvent(QResizeEvent *event) {
     }
 }
 
-Node* MainWindow::drawGraphic(QGraphicsScene *scene, Node* current, int year, int x, int modif, int OXyValue, int* isFirst, double* prevX, double* prevY) {
+Node* MainWindow::drawGraphic(QGraphicsScene *scene, Node* current, int year, int x,  int OXyValue, int* isFirst, double* prevX, double* prevY) {
+    double coordYMax =(context.max - context.min);
+    double modif = fabs((OY_LENGTH) / coordYMax);
+
     while (current) {
         if (!strcmp(current->data.region, context.region)) {
             if (current->data.year == year) {
-                double y = OXyValue - getField(current,atoi(context.column))/modif * context.cellSize;
+                double y = OXyValue - (getField(current, atoi(context.column)) - context.min) * modif * context.cellSize;
                 if (*isFirst) {
                     *prevX = x;
                     *prevY = y;
                     *isFirst = 0;
                 }
                 QGraphicsEllipseItem *dataMarker = new QGraphicsEllipseItem(0, 0, context.cellSize/4, context.cellSize/4);
-                if (getField(current,atoi(context.column)) == context.min) {
+                if (getField(current, atoi(context.column)) == context.min) {
                     dataMarker->setBrush(Qt::blue);
-                } else if (getField(current,atoi(context.column)) == context.max) {
+                } else if (getField(current, atoi(context.column)) == context.max) {
                     dataMarker->setBrush(Qt::yellow);
                 }  else {
                     dataMarker->setBrush(Qt::red);
                 }
                 scene->addLine(x, y, *prevX, *prevY, QPen(Qt::red));
-                dataMarker->setPos(x-context.cellSize/8, y-context.cellSize/8);
+                dataMarker->setPos(x - context.cellSize/8, y-context.cellSize/8);
                 scene->addItem(dataMarker);
 
                 *prevX = x;
                 *prevY = y;
 
-                QGraphicsTextItem *dataTextItem = scene->addText(QString::number(getField(current,atoi(context.column))));
+                QGraphicsTextItem *dataTextItem = scene->addText(QString::number(getField(current, atoi(context.column))));
                 dataTextItem->setPos(x - context.cellSize/2, y);
 
                 return current->next;
@@ -335,4 +316,36 @@ Node* MainWindow::drawGraphic(QGraphicsScene *scene, Node* current, int year, in
             current = current->next;
         }
     }
+}
+
+double MainWindow::findScale() {
+    return (context.max - context.min) / OY_NUMBER_OF_POINTS;
+}
+
+int MainWindow::findMinYear() {
+    Node* p = context.table->first;
+    int min = BIG_NUM_FOR_COMP;
+
+    do {
+        if (!strcmp(p->data.region, context.region)) {
+            if (p->data.year < min)
+                min = p->data.year;
+        }
+        p = p->next;
+    } while (p != NULL);
+    return min;
+}
+
+int MainWindow::findMaxYear() {
+    Node* p = context.table->first;
+    int max = 0;
+
+    do {
+        if (!strcmp(p->data.region, context.region)) {
+            if (p->data.year > max)
+                max = p->data.year;
+        }
+        p = p->next;
+    } while (p != NULL);
+    return max;
 }

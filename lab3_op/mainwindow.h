@@ -23,6 +23,10 @@
 #define EMPTY_TABLE_ERROR "Table is empty. Nothing to calculate"
 #define ALLOCATION_ERROR "Memory could not be allocated"
 
+#define OY_LENGTH 15
+#define SPACER 4
+#define BIG_NUM_FOR_COMP 10000
+#define OY_NUMBER_OF_POINTS 10
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -53,7 +57,10 @@ private slots:
     void drawOXAndGraphic(QGraphicsScene *scene, int OYxValue, int OXyValue);
     double getField(Node* p, int column);
     void resizeEvent(QResizeEvent* event) override;
-    Node* drawGraphic(QGraphicsScene *scene, Node* current, int year, int x, int modif, int OXyValue, int* isFirst, double* prevX, double* prevY);
+    Node* drawGraphic(QGraphicsScene *scene, Node* current, int year, int x, int OXyValue, int* isFirst, double* prevX, double* prevY);
+    double findScale();
+    int findMinYear();
+    int findMaxYear();
 
     void updateLabels();
     void errorCodeHandler();

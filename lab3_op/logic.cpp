@@ -284,24 +284,25 @@ double findfirstAppearance(List* table, char* region, int column) {
 
 
 double returnField(Node* p, int column) {
+    column--;
     double field = 0;
     switch(column) {
-    case 1:
+    case Year:
         field = p->data.year;
         break;
-    case 3:
+    case NaturalPopulationGrowth:
         field = p->data.naturalPopulationGrowth;
         break;
-    case 4:
+    case BirthRate:
         field = p->data.birthRate;
         break;
-    case 5:
+    case DeathRate:
         field = p->data.deathRate;
         break;
-    case 6:
+    case GeneralDemographicWeight:
         field = p->data.generalDemographicWeight;
         break;
-    case 7:
+    case Urbanisation:
         field = p->data.urbanisation;
         break;
     }

@@ -17,6 +17,16 @@ struct FileLine {
     double urbanisation;
 };
 
+enum LineField {
+    Year,
+    Region,
+    NaturalPopulationGrowth,
+    BirthRate,
+    DeathRate,
+    GeneralDemographicWeight,
+    Urbanisation
+};
+
 struct Node {
     FileLine data;
     Node* next;
