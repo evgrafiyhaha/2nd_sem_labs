@@ -1,35 +1,89 @@
 #ifndef LAB2_OOP_ITERATOR_H
 #define LAB2_OOP_ITERATOR_H
-#include <vector>
+#include <iostream>
+#include "Node.h"
 
-template <typename T, typename U>
+template <typename T>
+class List;
+
+template <typename T>
 class Iterator
 {
+    friend class List<T>;
+
 public:
-    typedef typename std::vector<T>::iterator iter_type;
-    Iterator(U *p_data, bool reverse = false) : m_p_data_(p_data)
-    {
-        m_it_ = m_p_data_->m_data_.begin();
+    using iterator_category = std::forward_iterator_tag;
+
+    using value_type = T;
+    using difference_type = std::ptrdiff_t;
+    using pointer = T*;
+    using reference = T&;
+
+public:
+    Iterator(const Iterator& it) = default;
+
+    bool operator ==(const Iterator& other) const {
+        return index == other.index;
     }
-    void First()
-    {
-        m_it_ = m_p_data_->m_data_.begin();
+
+    bool operator !=(const Iterator& other) const {
+        return index != other.index;
     }
-    void Next()
-    {
-        m_it_++;
+
+    reference operator*() {
+        return getNode()->data;
     }
-    bool IsDone()
-    {
-        return (m_it_ == m_p_data_->m_data_.end());
+
+    const reference operator*() const {
+        return getNode()->data;
     }
-    iter_type Current()
-    {
-        return m_it_;
+
+    pointer operator->() {
+        return &(getNode()->data);
     }
+
+    const pointer operator->() const {
+        return &(getNode()->data);
+    }
+
+    operator bool() const {
+        return index != std::numeric_limits<size_t>::max();
+    }
+
+    Iterator& operator++() {
+        if (auto node = getNode()) {
+            ++index;
+        } else {
+            index = std::numeric_limits<size_t>::max();
+        }
+        return *this;
+    }
+
+    Iterator operator++(int) {
+        Iterator temp = *this;
+        ++(*this);
+        return temp;
+    }
+
 private:
-    U *m_p_data_;
-    iter_type m_it_;
+    Iterator(const std::shared_ptr<Node<T>>& f, const std::shared_ptr<size_t>& c, size_t ind = 0)
+            : first(f), count(c), index(ind) {}
+
+    std::shared_ptr<Node<T>> getNode() const {
+        if (index >= *count) return nullptr;
+        auto current = first;
+        for (size_t i = 0; i < index; ++i)
+            current = current->next;
+        return current;
+    }
+
+private:
+    std::shared_ptr<Node<T>> first;
+    std::shared_ptr<size_t> count;
+    size_t index = 0;
 };
 
+
+
 #endif //LAB2_OOP_ITERATOR_H
+
