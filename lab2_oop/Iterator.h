@@ -20,36 +20,31 @@ public:
     using reference = T&;
 
 public:
+    Iterator(List<T> lst): first(lst.first), count(lst.count), index(0) {}
+
     Iterator(const Iterator& it) = default;
 
     bool operator ==(const Iterator& other) const {
         return index == other.index;
     }
-
     bool operator !=(const Iterator& other) const {
         return index != other.index;
     }
-
     reference operator*() {
         return getNode()->data;
     }
-
     const reference operator*() const {
         return getNode()->data;
     }
-
     pointer operator->() {
         return &(getNode()->data);
     }
-
     const pointer operator->() const {
         return &(getNode()->data);
     }
-
     operator bool() const {
         return index != std::numeric_limits<size_t>::max();
     }
-
     Iterator& operator++() {
         if (auto node = getNode()) {
             ++index;
@@ -58,11 +53,36 @@ public:
         }
         return *this;
     }
-
     Iterator operator++(int) {
         Iterator temp = *this;
         ++(*this);
         return temp;
+    }
+
+    Iterator First() {
+        return Iterator(first,count);
+    }
+
+    Iterator next() {
+        if (auto node = getNode()) {
+            ++index;
+        } else {
+            index = std::numeric_limits<size_t>::max();
+        }
+        return *this;
+    }
+
+    T value() {
+        return getNode()->data;
+    }
+
+    bool is_end() {
+        if (index >= *count) {
+            return true;
+        } else {
+            return false;
+        }
+
     }
 
 private:

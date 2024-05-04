@@ -6,12 +6,15 @@
 #include "Node.h"
 #include "Iterator.h"
 
+#include "EmptyListError.h"
+#include "IndexError.h"
+#include "InvalidSize.h"
+
 template <typename T>
 class List {
-
+    friend class Iterator<T>;
 public:
 
-    using value_type = T;
     using iterator = Iterator<T>;
 
     List();
@@ -27,10 +30,11 @@ public:
     void set_elem(int index,const T& elem);
     T& get_elem(int index);
     void remove_elem(int index);
-    //List<T> combine(const List<T>& lst);
-    //void sort(int (*comp)(const T& r1, const T& r2));
+    List<T> combine(const List<T>& lst);
+    void sort(int (*comp)(const T& r1, const T& r2));
     int get_index(T &elem) const;
     T* to_array();
+    static int compare(const T& a, const T& b);
 
     T& operator[](int index);
     List<T>& operator =(const List<T>& lst);
@@ -81,10 +85,10 @@ T& List<T>::operator[](int index) {
     std::shared_ptr<Node<T>> p = first;
 
     if (p == nullptr)
-        //throw
-        if (this->get_length() < index) {
-            //throw
-        }
+        throw EmptyListError(EMPTY_LIST_ERROR);
+    if (get_length() < index || index < 0) {
+        throw IndexError(INDEX_ERROR);
+    }
 
     for (int i = 0;i < index;i++) {
         p = p->next;
@@ -123,9 +127,22 @@ void List<T>::add_range(const List<T>& lst) {
 
 template <typename T>
 void List<T>::add_range(T* arr, int size) {
+    if (size < 0) {
+        throw InvalidSizeError(INVALID_SIZE_ERROR);
+    }
+
     for(int i = 0;i < size; i++) {
         this->add(arr[i]);
     }
+}
+
+template <typename T>
+List<T> List<T>::combine(const List<T>& lst) {
+    List<T> result(*this);
+
+    result.add_range(lst);
+
+    return result;
 }
 
 template <typename T>
@@ -133,10 +150,10 @@ void List<T>::set_elem(int index,const T& elem) {
     auto p = first;
 
     if (p == nullptr)
-        //throw
-        if (this->get_length() < index) {
-            //throw
-        }
+        throw EmptyListError(EMPTY_LIST_ERROR);
+    if (get_length() < index || index < 0) {
+        throw IndexError(INDEX_ERROR);
+    }
 
     for (int i = 0;i < index;i++) {
         p = p->next;
@@ -149,10 +166,10 @@ T& List<T>::get_elem(int index) {
     auto p = first;
 
     if (p == nullptr)
-        //throw
-        if (this->get_length() < index) {
-            //throw
-        }
+        throw EmptyListError(EMPTY_LIST_ERROR);
+    if (get_length() < index || index < 0) {
+        throw IndexError(INDEX_ERROR);
+    }
 
     for (int i = 0;i < index;i++) {
         p = p->next;
@@ -165,10 +182,10 @@ void List<T>::remove_elem(int index) {
     auto p = first;
 
     if (p == nullptr)
-        //throw
-        if (this->get_length() < index) {
-            //throw
-        }
+        throw EmptyListError(EMPTY_LIST_ERROR);
+    if (get_length() < index || index < 0) {
+        throw IndexError(INDEX_ERROR);
+    }
 
     for (int i = 0;i < index-1;i++) {
         p = p->next;
@@ -186,16 +203,17 @@ template <typename T>
 int List<T>::get_index(T &elem) const {
     auto p = first;
     int index = 0;
+    int answer = -1;
 
-    do {
+    while (p != nullptr) {
         if (p->data == elem) {
-            return index;
+            answer = index;
         }
         index++;
         p = p->next;
-    } while (p != nullptr);
+    }
 
-    return -1;
+    return answer;
 }
 
 template <typename T>
@@ -227,6 +245,41 @@ List<T>& List<T>::operator=(const List<T>& lst) {
         current = next;
     }
     return *this;
+}
+
+template <typename T>
+void List<T>::sort(int (*comp)(const T& r1, const T& r2)) {
+    if (get_length() <= 1) return;
+
+    bool swapped;
+    do {
+        swapped = false;
+        std::shared_ptr<Node<T>> ptr1 = first;
+        std::shared_ptr<Node<T>> ptr2 = first->next;
+        while (ptr2 != nullptr) {
+            if (comp(ptr1->data, ptr2->data) > 0) {
+                std::swap(ptr1->data, ptr2->data);
+                swapped = true;
+            }
+            ptr1 = ptr1->next;
+            ptr2 = ptr2->next;
+        }
+    } while (swapped);
+}
+
+template <typename T>
+int List<T>::compare(const T& a, const T& b) {
+    if (a < b) return -1;
+    if (a > b) return 1;
+    return 0;
+}
+
+template <typename T>
+std::ostream& operator <<(std::ostream& os, List<T>& lst) {
+    for (int i = 0; i < lst.get_length(); i++)
+        os << lst[i] << " ";
+
+    return os;
 }
 
 #endif //LAB2_OOP_LIST_H
