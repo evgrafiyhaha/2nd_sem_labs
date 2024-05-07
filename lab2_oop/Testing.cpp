@@ -79,15 +79,22 @@ void extraTests(List<T> &lst) {
     std::cout << "TEST_12: void sort(int (*comp)(const T& r1, constT& r2)); " << std::endl;
     lst4.sort(List<int>::compare);
     std::cout << lst4 << std::endl;
+
+    std::cout << "TEST_13: List<std::string> tests" << std::endl;
+    List<std::string> lst5 = {"Hello", "Dear"};
+    std::string temp = "World!";
+    lst5.add(temp);
+    lst5.remove_elem(1);
+    std::cout << lst5.get_index(temp) << std::endl;
 }
 
 template <typename T>
 void iteratorTests(List<T> &lst) {
     std::cout << std::endl << "ITERATOR TESTS:" << std::endl;
-    std::cout << "TEST_13: std::distance " << std::endl;
+    std::cout << "TEST_14: std::distance " << std::endl;
     std::cout << std::distance(lst.begin(), lst.end()) << std::endl;
 
-    std::cout << "TEST_14: First(); is_end(); next(); value() " << std::endl;
+    std::cout << "TEST_15: First(); is_end(); next(); value() " << std::endl;
     Iterator<int> it(lst);
     for (it.First(); !it.is_end(); it.next())
         std::cout << it.value() << " ";

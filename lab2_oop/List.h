@@ -117,12 +117,9 @@ void List<T>::add(const T& elem) {
 
 template <typename T>
 void List<T>::add_range(const List<T>& lst) {
-    auto p2 = lst.first;
-
-    while (p2 != nullptr) {
-        this->add(p2->data);
-        p2 = p2->next;
-    }
+    Iterator<T> it(lst);
+    for (it.First(); !it.is_end(); it.next())
+        this->add(it.value());
 }
 
 template <typename T>
@@ -201,16 +198,16 @@ void List<T>::remove_elem(int index) {
 
 template <typename T>
 int List<T>::get_index(T &elem) const {
-    auto p = first;
     int index = 0;
     int answer = -1;
 
-    while (p != nullptr) {
-        if (p->data == elem) {
+    Iterator<T> it(*this);
+    for (it.First(); !it.is_end(); it.next()) {
+        if (it.value() == elem) {
             answer = index;
+            break;
         }
         index++;
-        p = p->next;
     }
 
     return answer;
@@ -218,15 +215,14 @@ int List<T>::get_index(T &elem) const {
 
 template <typename T>
 T* List<T>::to_array() {
-    int length = this->get_length();
+    int length = get_length();
     T* arr = new T[length];
-    auto p = first;
     int index = 0;
 
-    do {
-        arr[index++] = p->data;
-        p = p->next;
-    } while (p != nullptr);
+    Iterator<T> it(*this);
+    for (it.First(); !it.is_end(); it.next()) {
+        arr[index++] = it.value();
+    }
 
     return arr;
 }
@@ -237,12 +233,11 @@ List<T>& List<T>::operator=(const List<T>& lst) {
         return *this;
 
     first = nullptr;
-    count = std::make_shared<size_t>(0);
-    auto current = lst.first;
-    while (current != nullptr) {
-        auto next = current->next;
-        add(current->data);
-        current = next;
+    count = std::make_shared<size_t>(lst.get_length());
+
+    Iterator<T> it(lst);
+    for (it.First(); !it.is_end(); it.next()) {
+        add(it.value());
     }
     return *this;
 }
@@ -276,9 +271,10 @@ int List<T>::compare(const T& a, const T& b) {
 
 template <typename T>
 std::ostream& operator <<(std::ostream& os, List<T>& lst) {
-    for (int i = 0; i < lst.get_length(); i++)
-        os << lst[i] << " ";
-
+    Iterator<T> it(lst);
+    for (it.First(); !it.is_end(); it.next()) {
+        os << it.value() << " ";
+    }
     return os;
 }
 

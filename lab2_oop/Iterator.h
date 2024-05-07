@@ -20,7 +20,7 @@ public:
     using reference = T&;
 
 public:
-    Iterator(List<T> lst): first(lst.first), count(lst.count), index(0) {}
+    explicit Iterator(List<T> lst): first(lst.first), count(lst.count), index(0) {}
 
     Iterator(const Iterator& it) = default;
 

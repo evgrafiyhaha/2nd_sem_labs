@@ -229,7 +229,7 @@ void MainWindow::drawOY(QGraphicsScene *scene, int OYxValue, int OXyValue) {
     for (int y = 0; y <= OY_NUMBER_OF_POINTS; y++) {
         QGraphicsEllipseItem *markerY = new QGraphicsEllipseItem(0, 0, context.cellSize/4, context.cellSize/4);
         markerY->setBrush(Qt::white);
-        markerY->setPos(OYxValue - context.cellSize/8, yCurr);
+        markerY->setPos(OYxValue - context.cellSize/8, yCurr - context.cellSize/8);
         scene->addItem(markerY);
 
         QGraphicsTextItem *textItemY = scene->addText(QString::number(yCounter));
@@ -296,7 +296,7 @@ Node* MainWindow::drawGraphic(QGraphicsScene *scene, Node* current, int year, in
                 if (getField(current, atoi(context.column)) == context.min) {
                     dataMarker->setBrush(Qt::blue);
                 } else if (getField(current, atoi(context.column)) == context.max) {
-                    dataMarker->setBrush(Qt::yellow);
+                    dataMarker->setBrush(Qt::green);
                 }  else {
                     dataMarker->setBrush(Qt::red);
                 }
