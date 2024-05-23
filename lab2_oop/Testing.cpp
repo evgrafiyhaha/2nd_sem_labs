@@ -22,42 +22,49 @@ void additionTests(List<T> &lst) {
     lst.add(5);
     std::cout << lst << std::endl;
 
-    std::cout << "TEST_2: void add_range(const list<T>& lst); " << std::endl;
+    std::cout << "TEST_2: void addRange(const list<T>& lst); " << std::endl;
     List<int> lst2 = {6, 7, 8};
-    lst.add_range(lst2);
+    lst.addRange(lst2);
     std::cout << lst << std::endl;
 
-    std::cout << "TEST_3: void add_range(T* arr, int size); " << std::endl;
+    std::cout << "TEST_3: void addRange(T* arr, int size); " << std::endl;
     int arr[] = {9, 10};
-    lst.add_range(arr, 2);
+    lst.addRange(arr, 2);
     std::cout << lst << std::endl;
+
+    std::cout << "TEST_?: + += reverse " << std::endl;
+    List<int> listPlus = lst+lst2;
+    listPlus += lst2;
+    std::cout << listPlus << std::endl;
+    listPlus.reverse();
+    std::cout << listPlus << std::endl;
 }
 
 template <typename T>
 void deletionTests(List<T> &lst) {
-    std::cout << "TEST_4: void remove_elem(int index); " << std::endl;
-    lst.remove_elem(7);
+    std::cout << "TEST_4: void removeElem(int index); " << std::endl;
+    lst.removeElem(7);
     std::cout << lst << std::endl;
 }
 
 template <typename T>
 void getsTests(List<T> &lst) {
-    std::cout << "TEST_5: int get_length() const; " << std::endl;
-    std::cout << lst.get_length() << std::endl;
+    std::cout << "TEST_5: int getLength() const; " << std::endl;
+    std::cout << lst.getLength() << std::endl;
 
-    std::cout << "TEST_6: T& get_elem(int index); " << std::endl;
-    std::cout << lst.get_elem(6) << std::endl;
+    std::cout << "TEST_6: T& getElem(int index); " << std::endl;
+    std::cout << lst.getElem(6) << std::endl;
 
     std::cout << "TEST_7: T& operator[](int index); " << std::endl;
     std::cout << lst[6] << std::endl;
 
-    std::cout << "TEST_8: int get_index(T &elem) const; " << std::endl;
+    std::cout << "TEST_8: int getIndex(T &elem) const; " << std::endl;
     int elem = 12;
-    std::cout << lst.get_index(elem) << std::endl;
+    std::cout << lst.getIndex(elem) << std::endl;
 
-    std::cout << "TEST_9: void set_elem(int index,const T& elem); " << std::endl;
+    std::cout << "TEST_9: void setElem(int index,const T& elem); " << std::endl;
     int elem2 = 52;
-    lst.set_elem(4,elem2);
+    lst.setElem(4,elem2);
     std::cout << lst << std::endl;
 }
 
@@ -65,7 +72,7 @@ template <typename T>
 void extraTests(List<T> &lst) {
     std::cout << "TEST_10: T* to_array(); " << std::endl;
     int* arr = lst.to_array();
-    for (int i = 0;i < lst.get_length();i++) {
+    for (int i = 0;i < lst.getLength();i++) {
         std::cout << arr[i] << " ";
     }
     std::cout << std::endl;
@@ -84,8 +91,8 @@ void extraTests(List<T> &lst) {
     List<std::string> lst5 = {"Hello", "Dear"};
     std::string temp = "World!";
     lst5.add(temp);
-    lst5.remove_elem(1);
-    std::cout << lst5.get_index(temp) << std::endl;
+    lst5.removeElem(1);
+    std::cout << lst5.getIndex(temp) << std::endl;
 }
 
 template <typename T>
@@ -95,8 +102,8 @@ void iteratorTests(List<T> &lst) {
     std::cout << std::distance(lst.begin(), lst.end()) << std::endl;
 
     std::cout << "TEST_15: First(); is_end(); next(); value() " << std::endl;
-    Iterator<int> it(lst);
-    for (it.First(); !it.is_end(); it.next())
-        std::cout << it.value() << " ";
+    for (auto elem : lst)
+        std::cout << elem << " ";
     std::cout << std::endl;
+    List<std::string> lst5{"int"};
 }

@@ -16,5 +16,7 @@ struct AppContext {
     int cellSize = 20;
     int currentCoordinateOperation;
     int direction;
+    Point centerPoint;
+    int lineLength;
 };
 #endif // APPCONTEXT_H

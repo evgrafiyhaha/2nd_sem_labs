@@ -92,7 +92,9 @@ void MainWindow::on_loadDataButton_clicked() {
     doOperation(SetnormalizationTo,&context,&param);
 
     doOperation(Loading,&context, NULL);
-
+    if ((context.normalizationFrom < context.normalizationTo && context.normalizationFrom >= 0 && context.normalizationTo >= 0)) {
+        doOperation(Normalizing,&context,NULL);
+    }
     updateLabels();
 }
 
@@ -108,36 +110,28 @@ void MainWindow::updateLabels() {
 }
 
 void MainWindow::showModel() {
-    if ((context.normalizationFrom < context.normalizationTo && context.normalizationFrom >= 0 && context.normalizationTo >= 0)) {
+    if (((context.normalizationFrom < context.normalizationTo && context.normalizationFrom >= 0 && context.normalizationTo >= 0) || (context.normalizationFrom == 0 && context.normalizationTo == 0))) {
         QGraphicsScene *scene = new QGraphicsScene(this);
         ui->graphicsView->setScene(scene);
-
-        drawNormedModel(scene);
-    } else if ((context.normalizationFrom == 0 && context.normalizationTo == 0)) {
-        QGraphicsScene *scene = new QGraphicsScene(this);
-        ui->graphicsView->setScene(scene);
-
         drawModel(scene);
     } else {
         context.errorData = NormalizationError;
-        qDebug() << context.normalizationTo;
-        qDebug() << context.normalizationFrom;
     }
 }
 
-double MainWindow::findMax(int param) {
+double MainWindow::findMax(coordinates param) {
     Node* current = context.coordinates->first;
     double max = 0;
     while (current) {
         double value = 0;
         switch (param) {
-        case 1:
+        case X:
             value = current->data.x;
             break;
-        case 2:
+        case Y:
             value = current->data.y;
             break;
-        case 3:
+        case Z:
             value = current->data.z;
             break;
         default:
@@ -151,19 +145,19 @@ double MainWindow::findMax(int param) {
     return max;
 }
 
-double MainWindow::findMin(int param) {
+double MainWindow::findMin(coordinates param) {
     Node* current = context.coordinates->first;
     double min = BIG_NUM_FOR_COMP;
     while (current) {
         double value = 0;
         switch (param) {
-        case 1:
+        case X:
             value = current->data.x;
             break;
-        case 2:
+        case Y:
             value = current->data.y;
             break;
-        case 3:
+        case Z:
             value = current->data.z;
             break;
         default:
@@ -176,170 +170,65 @@ double MainWindow::findMin(int param) {
     }
     return min;
 }
-/*
-double MainWindow::findPerspectiveMax(int param) {
-    Node* current = context.coordinates->first;
-    double max = 0;
-    while (current) {
-        double value = 0;
-        switch (param) {
-        case 2:
-            value = current->data.y;
-            break;
-        case 3:
-            value = current->data.z;
-            break;
-        default:
-            break;
-        }
-        if (value > max) {
-            max = value;
-        }
-        current = current->next;
-    }
-    return max;
-}
-
-double MainWindow::findPerspectiveMin(int param) {
-    Node* current = context.coordinates->first;
-    double min = BIG_NUM_FOR_COMP;
-    while (current) {
-        double value = 0;
-        switch (param) {
-        case 2:
-            value = (current->data.y * d) / (current->data.x + d);
-            break;
-        case 3:
-            value = current->data.z;
-            break;
-        default:
-            break;
-        }
-        if (value < min) {
-            min = value;
-        }
-        current = current->next;
-    }
-    return min;
-}
-*/
 
 void MainWindow::drawModel(QGraphicsScene *scene) {
     Node* current = context.coordinates->first;
+
+    List* prevYPointList = (List*)malloc(sizeof(List));
+    prevYPointList->first = NULL;
 
     double y_perspective, z_perspective;
     double x0 = 20, y0 = 0, z0 = 0;
-    double prevY = 0, prevZ = 0;
-    double d;
-    double max_distance = 0;
+    double prevY, prevZ;
+    int counter = 0;
 
-    while (current) {
-        double distance = sqrt(pow(current->data.x - x0, 2) + pow(current->data.y - y0, 2) + pow(current->data.z - z0, 2));
-        if (distance > max_distance)
-            max_distance = distance;
-        current = current->next;
-    }
+    double d = sqrt(pow(context.centerPoint.x - x0, 2) + pow(context.centerPoint.y - y0, 2) + pow(context.centerPoint.z - z0, 2));
 
-    d = max_distance;
+    //ось вращения
+    //scene->addLine((context.centerPoint.y*d)/(context.centerPoint.x + d)*context.cellSize,0,(context.centerPoint.y*d)/(context.centerPoint.x+d)*context.cellSize,-(30*d)/(context.centerPoint.x+d)*context.cellSize, QPen(Qt::green));
 
-    current = context.coordinates->first;
+    qDebug() << context.centerPoint.x << context.centerPoint.y << context.centerPoint.z;
     while (current) {
         y_perspective = (current->data.y * d) / (current->data.x + d);
         z_perspective = (current->data.z * d) / (current->data.x + d);
         QGraphicsEllipseItem *dataMarker = new QGraphicsEllipseItem(0, 0, context.cellSize/4, context.cellSize/4);
-        dataMarker->setBrush(Qt::red);
+        dataMarker->setBrush(QColorConstants::Svg::pink);
         dataMarker->setPos(y_perspective*context.cellSize - context.cellSize/8, -z_perspective*context.cellSize - context.cellSize/8);
         scene->addItem(dataMarker);
 
-        if (current != context.coordinates->first) {
-            scene->addLine(y_perspective*context.cellSize, -z_perspective*context.cellSize, prevY * context.cellSize, -prevZ * context.cellSize, QPen(Qt::red));
+        if (counter < context.lineLength) {
+            pushEnd(prevYPointList, current->data);
+        } else {
+            Point prevYPoint = findPrev(prevYPointList,counter);
+            pushEnd(prevYPointList,current->data);
+            double prevYYPerspective = (prevYPoint.y * d) / (prevYPoint.x + d);
+            double prevYZperspective = (prevYPoint.z * d) / (prevYPoint.x + d);
+            scene->addLine(y_perspective*context.cellSize, -z_perspective*context.cellSize, prevYYPerspective * context.cellSize, -prevYZperspective * context.cellSize, QPen(QColorConstants::Svg::pink));
+        }
+        if ((current != context.coordinates->first) && counter % context.lineLength != 0) {
+            scene->addLine(y_perspective * context.cellSize, -z_perspective * context.cellSize, prevY * context.cellSize, -prevZ * context.cellSize, QPen(QColorConstants::Svg::pink));
         }
 
         prevY = y_perspective;
         prevZ = z_perspective;
         current = current->next;
+        counter++;
     }
+    free(prevYPointList);
 }
 
-void MainWindow::drawNormedModel(QGraphicsScene *scene) {
-    Node* current = context.coordinates->first;
-
-    double y_perspective, z_perspective;
-    double x0 = normedValue(20,1), y0 = normedValue(0,2), z0 = normedValue(0,3);
-    double prevY = 0, prevZ = 0;
-    double d;
-    double max_distance = 0;
-
-    while (current) {
-        double distance = sqrt(pow(normedValue(current->data.x,1) - x0, 2) + pow(normedValue(current->data.y,2) - y0, 2) + pow(normedValue(current->data.z,3) - z0, 2));
-        if (distance > max_distance)
-            max_distance = distance;
-        current = current->next;
-    }
-
-    d = max_distance;
-
-    current = context.coordinates->first;
-    while (current) {
-        y_perspective = (normedValue(current->data.y,2) * d) / (normedValue(current->data.x,1) + d);
-        z_perspective = (normedValue(current->data.z,3) * d) / (normedValue(current->data.x,1) + d);
-        QGraphicsEllipseItem *dataMarker = new QGraphicsEllipseItem(0, 0, context.cellSize/4, context.cellSize/4);
-        dataMarker->setBrush(Qt::red);
-        dataMarker->setPos(y_perspective*context.cellSize - context.cellSize/8, -z_perspective*context.cellSize - context.cellSize/8);
-        scene->addItem(dataMarker);
-
-        if (current != context.coordinates->first) {
-            scene->addLine(y_perspective*context.cellSize, -z_perspective*context.cellSize, prevY * context.cellSize, -prevZ * context.cellSize, QPen(Qt::red));
+Point MainWindow::findPrev(List* prevPointsList, int counter) {
+    Node* prevPointCurrent = prevPointsList->first;
+    int index = counter - context.lineLength;
+    int finder = 0;
+    while (prevPointCurrent) {
+        if (index == finder) {
+            return prevPointCurrent->data;
         }
-
-        prevY = y_perspective;
-        prevZ = z_perspective;
-        current = current->next;
+        prevPointCurrent = prevPointCurrent->next;
+        finder++;
     }
 }
-
-double MainWindow::normedValue(double value, int param) {
-    return context.normalizationFrom + (value - findMin(param))/(findMax(param) - findMin(param))*(context.normalizationTo - context.normalizationFrom);
-}
-
-/*
-//слишком много линий
-void MainWindow::drawModel(QGraphicsScene *scene) {
-    Node* current = context.coordinates->first;
-
-    double y_perspective, z_perspective;
-    int x0 = 0, y0 = 0, z0 = 0;
-    double d;
-    double max_distance = 0;
-
-    while (current) {
-        double distance = sqrt(pow(current->data.x - x0, 2) + pow(current->data.y - y0, 2) + pow(current->data.z - z0, 2));
-        if (distance > max_distance)
-            max_distance = distance;
-        current = current->next;
-    }
-
-    d = max_distance;
-
-    current = context.coordinates->first;
-    while (current) {
-        y_perspective = (current->data.y * d) / (current->data.x + d);
-        z_perspective = (current->data.z * d) / (current->data.x + d);
-        QGraphicsEllipseItem *dataMarker = new QGraphicsEllipseItem(0, 0, context.cellSize/4, context.cellSize/4);
-        dataMarker->setBrush(Qt::red);
-        dataMarker->setPos(y_perspective*context.cellSize - context.cellSize/8, -z_perspective*context.cellSize - context.cellSize/8);
-        scene->addItem(dataMarker);
-        Node* secondPoint = current->next;
-        while (secondPoint) {
-            double y_perspectiveSecond = (secondPoint->data.y * d) / (secondPoint->data.x + d);
-            double z_perspectiveSecond = (secondPoint->data.z * d) / (secondPoint->data.x + d);
-            scene->addLine(y_perspective*context.cellSize, -z_perspective*context.cellSize, y_perspectiveSecond * context.cellSize, -z_perspectiveSecond * context.cellSize, QPen(Qt::red));
-            secondPoint = secondPoint->next;
-        }
-        current = current->next;
-    }
-}
-*/
 
 void MainWindow::errorCodeHandler() {
     char* errorText = " ";
@@ -367,7 +256,7 @@ void MainWindow::errorCodeHandler() {
 }
 
 void MainWindow::onMoveUpButtonPressed() {
-    movementTimer->start(100);
+    movementTimer->start(TIMER_TIME);
     AppParams param;
     param.currentCoordinateOperation = 3;
     param.direction = 1;
@@ -385,7 +274,7 @@ void MainWindow::onMovementTimeout() {
 }
 
 void MainWindow::onMoveDownButtonPressed() {
-    movementTimer->start(100);
+    movementTimer->start(TIMER_TIME);
     AppParams param;
     param.currentCoordinateOperation = 3;
     param.direction = -1;
@@ -397,7 +286,7 @@ void MainWindow::onMoveDownButtonReleased() {
 }
 
 void MainWindow::onMoveLeftButtonPressed() {
-    movementTimer->start(100);
+    movementTimer->start(TIMER_TIME);
     AppParams param;
     param.currentCoordinateOperation = 2;
     param.direction = -1;
@@ -409,7 +298,7 @@ void MainWindow::onMoveLeftButtonReleased() {
 }
 
 void MainWindow::onMoveRightButtonPressed() {
-    movementTimer->start(100);
+    movementTimer->start(TIMER_TIME);
     AppParams param;
     param.currentCoordinateOperation = 2;
     param.direction = 1;
@@ -421,7 +310,7 @@ void MainWindow::onMoveRightButtonReleased() {
 }
 
 void MainWindow::onMoveBackButtonPressed() {
-    movementTimer->start(100);
+    movementTimer->start(TIMER_TIME);
     AppParams param;
     param.currentCoordinateOperation = 1;
     param.direction = -1;
@@ -434,7 +323,7 @@ void MainWindow::onMoveBackButtonReleased() {
 }
 
 void MainWindow::onMoveForwardButtonPressed() {
-    movementTimer->start(100);
+    movementTimer->start(TIMER_TIME);
     AppParams param;
     param.currentCoordinateOperation = 1;
     param.direction = 1;
@@ -447,7 +336,7 @@ void MainWindow::onMoveForwardButtonReleased() {
 }
 
 void MainWindow::onRotateUpButtonPressed() {
-    rotationTimer->start(100);
+    rotationTimer->start(TIMER_TIME);
     AppParams param;
     param.currentCoordinateOperation = 2;
     param.direction = 1;
@@ -465,7 +354,7 @@ void MainWindow::onRotationTimeout() {
 }
 
 void MainWindow::onRotateDownButtonPressed() {
-    rotationTimer->start(100);
+    rotationTimer->start(TIMER_TIME);
     AppParams param;
     param.currentCoordinateOperation = 2;
     param.direction = -1;
@@ -478,7 +367,7 @@ void MainWindow::onRotateDownButtonReleased() {
 }
 
 void MainWindow::onRotateLeftButtonPressed() {
-    rotationTimer->start(100);
+    rotationTimer->start(TIMER_TIME);
     AppParams param;
     param.currentCoordinateOperation = 3;
     param.direction = -1;
@@ -491,7 +380,7 @@ void MainWindow::onRotateLeftButtonReleased() {
 }
 
 void MainWindow::onRotateRightButtonPressed() {
-    rotationTimer->start(100);
+    rotationTimer->start(TIMER_TIME);
     AppParams param;
     param.currentCoordinateOperation = 3;
     param.direction = 1;
@@ -504,7 +393,7 @@ void MainWindow::onRotateRightButtonReleased() {
 }
 
 void MainWindow::onScalingUpButtonPressed() {
-    scalingTimer->start(100);
+    scalingTimer->start(TIMER_TIME);
     AppParams param;
 
     param.direction = 2;
@@ -516,7 +405,7 @@ void MainWindow::onScalingUpButtonReleased() {
 }
 
 void MainWindow::onScalingDownButtonPressed() {
-    scalingTimer->start(100);
+    scalingTimer->start(TIMER_TIME);
     AppParams param;
 
     param.direction = 1;
@@ -531,14 +420,3 @@ void MainWindow::onScalingTimeout() {
     doOperation(Scaling,&context,NULL);
     updateLabels();
 }
-
-void MainWindow::resizeEvent(QResizeEvent* event) {
-    QMainWindow::resizeEvent(event);
-
-    updateLabels();
-}
-
-void MainWindow::adaptScene(QGraphicsScene *scene) {
-
-}
-

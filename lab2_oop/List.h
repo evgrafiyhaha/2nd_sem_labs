@@ -23,22 +23,24 @@ public:
     List(std::initializer_list<T> lst);
     ~List();
 
-    size_t get_length() const;
+    size_t getLength() const;
     void add(const T& elem);
-    void add_range(const List<T>& lst);
-    void add_range(T* arr, int size);
-    void set_elem(int index,const T& elem);
-    T& get_elem(int index);
-    void remove_elem(int index);
+    void addRange(const List<T>& lst);
+    void addRange(T* arr, int size);
+    void setElem(int index,const T& elem);
+    T& getElem(int index);
+    void removeElem(int index);
     List<T> combine(const List<T>& lst);
     void sort(int (*comp)(const T& r1, const T& r2));
-    int get_index(T &elem) const;
+    int getIndex(T &elem) const;
     T* to_array();
     static int compare(const T& a, const T& b);
+    void reverse();
 
     T& operator[](int index);
     List<T>& operator =(const List<T>& lst);
-
+    List<T> operator+(const List<T>& lst);
+    List<T>& operator+=(const List<T>& lst);
     iterator begin() const noexcept { return Iterator<T>(first, count); }
     iterator end() const noexcept { return Iterator<T>(first, count, *count); }
 
@@ -56,9 +58,8 @@ template <typename T>
 List<T>::List(const List<T>& lst) : first(nullptr), count(std::make_shared<size_t>(0)) {
     std::shared_ptr<Node<T>> current = lst.first;
 
-    while (current != nullptr) {
-        add(current->data);
-        current = current->next;
+    for (auto elem : lst) {
+        add(elem);
     }
 }
 
@@ -76,7 +77,7 @@ List<T>::List(std::initializer_list<T> lst) : first(nullptr), count(std::make_sh
 }
 
 template <typename T>
-size_t List<T>::get_length() const {
+size_t List<T>::getLength() const {
     return *count;
 }
 
@@ -86,7 +87,7 @@ T& List<T>::operator[](int index) {
 
     if (p == nullptr)
         throw EmptyListError(EMPTY_LIST_ERROR);
-    if (get_length() < index || index < 0) {
+    if (getLength() < index || index < 0) {
         throw IndexError(INDEX_ERROR);
     }
 
@@ -116,14 +117,14 @@ void List<T>::add(const T& elem) {
 }
 
 template <typename T>
-void List<T>::add_range(const List<T>& lst) {
+void List<T>::addRange(const List<T>& lst) {
     Iterator<T> it(lst);
     for (it.First(); !it.is_end(); it.next())
         this->add(it.value());
 }
 
 template <typename T>
-void List<T>::add_range(T* arr, int size) {
+void List<T>::addRange(T* arr, int size) {
     if (size < 0) {
         throw InvalidSizeError(INVALID_SIZE_ERROR);
     }
@@ -137,18 +138,18 @@ template <typename T>
 List<T> List<T>::combine(const List<T>& lst) {
     List<T> result(*this);
 
-    result.add_range(lst);
+    result.addRange(lst);
 
     return result;
 }
 
 template <typename T>
-void List<T>::set_elem(int index,const T& elem) {
+void List<T>::setElem(int index,const T& elem) {
     auto p = first;
 
     if (p == nullptr)
         throw EmptyListError(EMPTY_LIST_ERROR);
-    if (get_length() < index || index < 0) {
+    if (getLength() < index || index < 0) {
         throw IndexError(INDEX_ERROR);
     }
 
@@ -159,12 +160,12 @@ void List<T>::set_elem(int index,const T& elem) {
 }
 
 template <typename T>
-T& List<T>::get_elem(int index) {
+T& List<T>::getElem(int index) {
     auto p = first;
 
     if (p == nullptr)
         throw EmptyListError(EMPTY_LIST_ERROR);
-    if (get_length() < index || index < 0) {
+    if (getLength() < index || index < 0) {
         throw IndexError(INDEX_ERROR);
     }
 
@@ -175,12 +176,12 @@ T& List<T>::get_elem(int index) {
 }
 
 template <typename T>
-void List<T>::remove_elem(int index) {
+void List<T>::removeElem(int index) {
     auto p = first;
 
     if (p == nullptr)
         throw EmptyListError(EMPTY_LIST_ERROR);
-    if (get_length() < index || index < 0) {
+    if (getLength() < index || index < 0) {
         throw IndexError(INDEX_ERROR);
     }
 
@@ -197,7 +198,7 @@ void List<T>::remove_elem(int index) {
 }
 
 template <typename T>
-int List<T>::get_index(T &elem) const {
+int List<T>::getIndex(T &elem) const {
     int index = 0;
     int answer = -1;
 
@@ -215,7 +216,7 @@ int List<T>::get_index(T &elem) const {
 
 template <typename T>
 T* List<T>::to_array() {
-    int length = get_length();
+    int length = getLength();
     T* arr = new T[length];
     int index = 0;
 
@@ -233,7 +234,7 @@ List<T>& List<T>::operator=(const List<T>& lst) {
         return *this;
 
     first = nullptr;
-    count = std::make_shared<size_t>(lst.get_length());
+    count = std::make_shared<size_t>(lst.getLength());
 
     Iterator<T> it(lst);
     for (it.First(); !it.is_end(); it.next()) {
@@ -244,7 +245,7 @@ List<T>& List<T>::operator=(const List<T>& lst) {
 
 template <typename T>
 void List<T>::sort(int (*comp)(const T& r1, const T& r2)) {
-    if (get_length() <= 1) return;
+    if (getLength() <= 1) return;
 
     bool swapped;
     do {
@@ -277,5 +278,35 @@ std::ostream& operator <<(std::ostream& os, List<T>& lst) {
     }
     return os;
 }
+
+template <typename T>
+List<T> List<T>::operator+(const List<T>& lst) {
+    return combine(lst);
+}
+
+template <typename T>
+List<T>& List<T>::operator+=(const List<T>& lst) {
+    addRange(lst);
+    return *this;
+}
+
+template <typename T>
+void List<T>::reverse() {
+    if (getLength() <= 1) return;
+
+    std::shared_ptr<Node<T>> prev = nullptr;
+    std::shared_ptr<Node<T>> current = first;
+    std::shared_ptr<Node<T>> next = nullptr;
+
+    while (current != nullptr) {
+        next = current->next;
+        current->next = prev;
+        prev = current;
+        current = next;
+    }
+
+    first = prev;
+}
+
 
 #endif //LAB2_OOP_LIST_H

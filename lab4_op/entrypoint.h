@@ -14,7 +14,8 @@ enum Operation {
     ChangeCoordinate,
     ChangeDirection,
     Rotation,
-    Scaling
+    Scaling,
+    Normalizing
 };
 
 struct AppParams {

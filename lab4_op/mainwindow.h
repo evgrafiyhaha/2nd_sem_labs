@@ -12,9 +12,11 @@
 #include "entrypoint.h"
 #include "list.h"
 #include "errors.h"
-#include "errors.h"
+
 
 #define BIG_NUM_FOR_COMP 10000
+#define TIMER_TIME 100
+
 
 #define NO_ERRORS "No errors. yet"
 #define FILE_NOT_CHOSEN_ERROR "File was not selected"
@@ -82,18 +84,12 @@ private slots:
 
     void showModel();
     void drawModel(QGraphicsScene *scene);
-    void drawNormedModel(QGraphicsScene *scene);
 
     void updateLabels();
     void errorCodeHandler();
-    double findMax(int param);
-    double findMin(int param);
-    //double findPerspectiveMax(int param);
-    //double findPerspectiveMin(int param);
-    double normedValue(double value, int param);
-    void resizeEvent(QResizeEvent* event) override;
-    void adaptScene(QGraphicsScene *scene);
-
+    double findMax(coordinates param);
+    double findMin(coordinates param);
+    Point findPrev(List* prevPointsList, int counter);
 
 private:
     Ui::MainWindow *ui;

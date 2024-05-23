@@ -32,5 +32,8 @@ void doOperation(Operation operation, AppContext* context, AppParams* params) {
     case Scaling:
         scaling(context);
         break;
+    case Normalizing:
+        normalize(context);
+        break;
     }
 }

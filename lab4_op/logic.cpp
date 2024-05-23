@@ -11,6 +11,7 @@ void initialize(AppContext* context) {
     context->normalizationTo = DEFAULT_METRICS_VALUE;
     context->currentCoordinateOperation = DEFAULT_METRICS_VALUE;
     context->direction = DEFAULT_METRICS_VALUE;
+    context->lineLength = DEFAULT_METRICS_VALUE;
 }
 
 void setFileName(AppContext* context, char* fileName) {
@@ -66,6 +67,11 @@ void movement(AppContext* context) {
                 }
                 current = current->next;
             }
+            Point centerPoint = centralPoint(context);
+            context->centerPoint.x = centerPoint.x;
+            context->centerPoint.y = centerPoint.y;
+            context->centerPoint.z = centerPoint.z;
+            context->errorData = NoErrors;
         } else {
             context->errorData = EmptyListError;
         }
@@ -77,31 +83,33 @@ void movement(AppContext* context) {
 void rotation(AppContext* context) {
     if (strcmp(context->fileName,"")) {
         if (context->coordinates != NULL ) {
+            Point centerPoint = context->centerPoint;
             double angle = (double)context->direction / 10;
             Node* current = context->coordinates->first;
             while (current) {
-                double x = current->data.x;
-                double y = current->data.y;
-                double z = current->data.z;
+                double x = current->data.x - centerPoint.x;
+                double y = current->data.y - centerPoint.y;
+                double z = current->data.z - centerPoint.z;
 
                 switch (context->currentCoordinateOperation) {
                 case 1:
-                    current->data.y = y * cos(angle) - z * sin(angle);
-                    current->data.z = y * sin(angle) + z * cos(angle);
+                    current->data.y = y * cos(angle) - z * sin(angle) + centerPoint.y;
+                    current->data.z = y * sin(angle) + z * cos(angle) + centerPoint.z;
                     break;
                 case 2:
-                    current->data.x = x * cos(angle) + z * sin(angle);
-                    current->data.z = -x * sin(angle) + z * cos(angle);
+                    current->data.x = x * cos(angle) + z * sin(angle) + centerPoint.x;
+                    current->data.z = -x * sin(angle) + z * cos(angle) + centerPoint.z;
                     break;
                 case 3:
-                    current->data.x = x * cos(angle) - y * sin(angle);
-                    current->data.y = x * sin(angle) + y * cos(angle);
+                    current->data.x = x * cos(angle) - y * sin(angle) + centerPoint.x;
+                    current->data.y = x * sin(angle) + y * cos(angle) + centerPoint.y;
                     break;
                 default:
                     break;
                 }
                 current = current->next;
             }
+            context->errorData = NoErrors;
         } else {
             context->errorData = EmptyListError;
         }
@@ -126,12 +134,38 @@ void scaling(AppContext* context) {
                 current->data.z*=scale;
                 current = current->next;
             }
+            context->centerPoint = centralPoint(context);
+            context->errorData = NoErrors;
         } else {
             context->errorData = EmptyListError;
         }
     } else {
         context->errorData = EmptyFileNameError;
     }
+}
+
+void normalize(AppContext* context) {
+    if (strcmp(context->fileName,"")) {
+        if (context->coordinates != NULL ) {
+            Node* current = context->coordinates->first;
+            while (current) {
+                current->data.x=normalizeValue(context,current->data.x,X);
+                current->data.y*=normalizeValue(context,current->data.y,Y);
+                current->data.z*=normalizeValue(context,current->data.z,Z);
+                current = current->next;
+            }
+            context->centerPoint = centralPoint(context);
+            context->errorData = NoErrors;
+        } else {
+            context->errorData = EmptyListError;
+        }
+    } else {
+        context->errorData = EmptyFileNameError;
+    }
+}
+
+double normalizeValue(AppContext* context,double value, coordinates param) {
+    return context->normalizationFrom + (value - min(context,param))/(max(context,param) - min(context,param))*(context->normalizationTo - context->normalizationFrom);
 }
 
 void load(AppContext* context) {
@@ -155,17 +189,18 @@ void load(AppContext* context) {
                 context->numberOfLines = numberOfLines;
                 context->numberOfSuccessLines = numberOfSuccessLines;
                 context->errorData = NoErrors;
+                context->centerPoint = centralPoint(context);
             } else {
                 deleteList(list);
             }
         } else {
             context->errorData = FileError;
         }
+        fclose(file);
     }
 }
 
 void fillList(FILE* file, List* list, AppContext* context, int* freeList, int* numberOfSuccessLines, int* numberOfErrorLines, int* numberOfLines) {
-
     while (!feof(file)) {
         char* line = (char*)malloc(LINE_MAX_LENGHT);
         if (line == NULL) {
@@ -174,7 +209,7 @@ void fillList(FILE* file, List* list, AppContext* context, int* freeList, int* n
             break;
         } else {
             int successRead = readline(file, line);
-            if (successRead && addLineToList(line, list, *numberOfLines)) {
+            if (successRead && addLineToList(context, line, list, *numberOfLines)) {
                 *numberOfSuccessLines+=1;
             } else {
                 *numberOfErrorLines+=1;
@@ -185,7 +220,7 @@ void fillList(FILE* file, List* list, AppContext* context, int* freeList, int* n
     }
 }
 
-int addLineToList(char* str, List* list, int lineCounter) {
+int addLineToList(AppContext* context, char* str, List* list, int lineCounter) {
     int isSuccess = 1;
     int xCounter = 0;
     char* token = strtok(str, ",");
@@ -202,6 +237,7 @@ int addLineToList(char* str, List* list, int lineCounter) {
         xCounter++;
         token = strtok(NULL, ",");
     }
+    context->lineLength = xCounter;
     return isSuccess;
 }
 
@@ -243,4 +279,65 @@ int readline(FILE* stream, char* str) {
     if (str[len - 1] == '\n')
         str[len - 1] = '\0';
     return isSuccess;
+}
+
+Point centralPoint(AppContext* context) {
+    Point answer;
+    answer.x = (max(context,X) + min(context,X))/2;
+    answer.y = (max(context,Y) + min(context,Y))/2;
+    answer.z = (max(context,Z) + min(context,Z))/2;
+
+    return answer;
+}
+
+double max(AppContext* context, coordinates param) {
+    Node* current = context->coordinates->first;
+    double max = 0;
+    while (current) {
+        double value = 0;
+        switch (param) {
+        case X:
+            value = current->data.x;
+            break;
+        case Y:
+            value = current->data.y;
+            break;
+        case Z:
+            value = current->data.z;
+            break;
+        default:
+            break;
+        }
+        if (value > max) {
+            max = value;
+        }
+        current = current->next;
+    }
+    return max;
+}
+
+double min(AppContext* context, coordinates param) {
+    Node* current = context->coordinates->first;
+    double min = 10000000;
+    while (current) {
+        double value = 0;
+        switch (param) {
+        case X:
+            value = current->data.x;
+            break;
+        case Y:
+            value = current->data.y;
+            break;
+        case Z:
+            value = current->data.z;
+            break;
+        default:
+            break;
+        }
+        if (value < min) {
+            min = value;
+        }
+        current = current->next;
+    }
+    return min;
 }
