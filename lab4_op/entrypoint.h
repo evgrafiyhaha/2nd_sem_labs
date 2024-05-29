@@ -22,8 +22,8 @@ struct AppParams {
     char fileName[LINE_MAX_LENGHT];
     char normalizationFrom[LINE_MAX_LENGHT];
     char normalizationTo[LINE_MAX_LENGHT];
-    int currentCoordinateOperation = 0;
-    int direction = 0;
+    Coordinates coordinateForOperation = none;
+    float operationParam = 0;
 };
 
 void doOperation(Operation operation, AppContext* context, AppParams* params);

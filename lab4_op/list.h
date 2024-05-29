@@ -13,7 +13,7 @@ struct Point {
     double z;
 };
 
-enum coordinates {
+enum Coordinates {
     none,
     X,
     Y,

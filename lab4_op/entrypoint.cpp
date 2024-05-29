@@ -18,19 +18,13 @@ void doOperation(Operation operation, AppContext* context, AppParams* params) {
         setNormalizationTo(context, params->normalizationTo);
         break;
     case Movement:
-        movement(context);
-        break;
-    case ChangeCoordinate:
-        changeCoordinate(context, params->currentCoordinateOperation);
-        break;
-    case ChangeDirection:
-        changeDirection(context, params->direction);
+        movement(context,params->coordinateForOperation,params->operationParam);
         break;
     case Rotation:
-        rotation(context);
+        rotation(context,params->coordinateForOperation,params->operationParam);
         break;
     case Scaling:
-        scaling(context);
+        scaling(context,params->operationParam);
         break;
     case Normalizing:
         normalize(context);

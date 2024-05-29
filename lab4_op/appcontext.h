@@ -13,9 +13,6 @@ struct AppContext {
     char fileName[LINE_MAX_LENGHT];
     double normalizationFrom;
     double normalizationTo;
-    int cellSize = 20;
-    int currentCoordinateOperation;
-    int direction;
     Point centerPoint;
     int lineLength;
 };

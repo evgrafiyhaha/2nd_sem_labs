@@ -9,8 +9,6 @@ void initialize(AppContext* context) {
     context->coordinates = NULL;
     context->normalizationFrom = DEFAULT_METRICS_VALUE;
     context->normalizationTo = DEFAULT_METRICS_VALUE;
-    context->currentCoordinateOperation = DEFAULT_METRICS_VALUE;
-    context->direction = DEFAULT_METRICS_VALUE;
     context->lineLength = DEFAULT_METRICS_VALUE;
 }
 
@@ -23,8 +21,10 @@ void setFileName(AppContext* context, char* fileName) {
 
 
 void setNormalizationFrom(AppContext* context, char* normalizationFrom) {
-    if (isDouble(normalizationFrom)) {
+    if (isDouble(normalizationFrom) && stringToDouble(normalizationFrom) >= 0) {
         context->normalizationFrom = stringToDouble(normalizationFrom);
+    } else if (!strcmp(normalizationFrom,"")) {
+        context->normalizationFrom = 0;
     } else {
         context->errorData = NormalizationError;
     }
@@ -32,35 +32,30 @@ void setNormalizationFrom(AppContext* context, char* normalizationFrom) {
 
 
 void setNormalizationTo(AppContext* context, char* normalizationTo) {
-    if (isDouble(normalizationTo)) {
+    if ((isDouble(normalizationTo) && stringToDouble(normalizationTo) > 0 && stringToDouble(normalizationTo) > context->normalizationFrom)) {
         context->normalizationTo = stringToDouble(normalizationTo);
+    } else if (!strcmp(normalizationTo,"") && context->normalizationFrom == 0){
+        context->normalizationTo = 0;
     } else {
         context->errorData = NormalizationError;
     }
 }
 
-void changeDirection(AppContext* context, int direction) {
-    context->direction = direction;
-}
 
-void changeCoordinate(AppContext* context, int currentCoordinateOperation) {
-    context->currentCoordinateOperation = currentCoordinateOperation;
-}
-
-void movement(AppContext* context) {
+void movement(AppContext* context, Coordinates coordinateForOperation, double operationParam) {
     if (strcmp(context->fileName,"")) {
         if (context->coordinates != NULL ) {
             Node* current = context->coordinates->first;
             while (current) {
-                switch (context->currentCoordinateOperation) {
-                case 1:
-                    current->data.x+=context->direction;
+                switch (coordinateForOperation) {
+                case X:
+                    current->data.x+=operationParam;
                     break;
-                case 2:
-                    current->data.y+=context->direction;
+                case Y:
+                    current->data.y+=operationParam;
                     break;
-                case 3:
-                    current->data.z+=context->direction;
+                case Z:
+                    current->data.z+=operationParam;
                     break;
                 default:
                     break;
@@ -80,27 +75,27 @@ void movement(AppContext* context) {
     }
 }
 
-void rotation(AppContext* context) {
+void rotation(AppContext* context, Coordinates coordinateForOperation, double operationParam) {
     if (strcmp(context->fileName,"")) {
         if (context->coordinates != NULL ) {
             Point centerPoint = context->centerPoint;
-            double angle = (double)context->direction / 10;
+            double angle = operationParam / 10;
             Node* current = context->coordinates->first;
             while (current) {
                 double x = current->data.x - centerPoint.x;
                 double y = current->data.y - centerPoint.y;
                 double z = current->data.z - centerPoint.z;
 
-                switch (context->currentCoordinateOperation) {
-                case 1:
+                switch (coordinateForOperation) {
+                case X:
                     current->data.y = y * cos(angle) - z * sin(angle) + centerPoint.y;
                     current->data.z = y * sin(angle) + z * cos(angle) + centerPoint.z;
                     break;
-                case 2:
+                case Y:
                     current->data.x = x * cos(angle) + z * sin(angle) + centerPoint.x;
                     current->data.z = -x * sin(angle) + z * cos(angle) + centerPoint.z;
                     break;
-                case 3:
+                case Z:
                     current->data.x = x * cos(angle) - y * sin(angle) + centerPoint.x;
                     current->data.y = x * sin(angle) + y * cos(angle) + centerPoint.y;
                     break;
@@ -118,15 +113,10 @@ void rotation(AppContext* context) {
     }
 }
 
-void scaling(AppContext* context) {
+void scaling(AppContext* context, double operationParam) {
     if (strcmp(context->fileName,"")) {
         if (context->coordinates != NULL ) {
-            double scale;
-            if (context->direction == 1) {
-                scale = 0.99;
-            } else {
-                scale = 1.01;
-            }
+            double scale = operationParam;
             Node* current = context->coordinates->first;
             while (current) {
                 current->data.x*=scale;
@@ -147,15 +137,19 @@ void scaling(AppContext* context) {
 void normalize(AppContext* context) {
     if (strcmp(context->fileName,"")) {
         if (context->coordinates != NULL ) {
-            Node* current = context->coordinates->first;
-            while (current) {
-                current->data.x=normalizeValue(context,current->data.x,X);
-                current->data.y*=normalizeValue(context,current->data.y,Y);
-                current->data.z*=normalizeValue(context,current->data.z,Z);
-                current = current->next;
+            if (context->errorData != NormalizationError) {
+                if (context->normalizationFrom < context->normalizationTo) {
+                    Node* current = context->coordinates->first;
+                    while (current) {
+                        current->data.x=normalizeValue(context,current->data.x,X);
+                        current->data.y=normalizeValue(context,current->data.y,Y);
+                        current->data.z=normalizeValue(context,current->data.z,Z);
+                        current = current->next;
+                    }
+                    context->centerPoint = centralPoint(context);
+                    context->errorData = NoErrors;
+                }
             }
-            context->centerPoint = centralPoint(context);
-            context->errorData = NoErrors;
         } else {
             context->errorData = EmptyListError;
         }
@@ -164,7 +158,7 @@ void normalize(AppContext* context) {
     }
 }
 
-double normalizeValue(AppContext* context,double value, coordinates param) {
+double normalizeValue(AppContext* context,double value, Coordinates param) {
     return context->normalizationFrom + (value - min(context,param))/(max(context,param) - min(context,param))*(context->normalizationTo - context->normalizationFrom);
 }
 
@@ -237,7 +231,9 @@ int addLineToList(AppContext* context, char* str, List* list, int lineCounter) {
         xCounter++;
         token = strtok(NULL, ",");
     }
-    context->lineLength = xCounter;
+    if (xCounter > context->lineLength) {
+        context->lineLength = xCounter;
+    }
     return isSuccess;
 }
 
@@ -290,7 +286,7 @@ Point centralPoint(AppContext* context) {
     return answer;
 }
 
-double max(AppContext* context, coordinates param) {
+double max(AppContext* context, Coordinates param) {
     Node* current = context->coordinates->first;
     double max = 0;
     while (current) {
@@ -316,9 +312,9 @@ double max(AppContext* context, coordinates param) {
     return max;
 }
 
-double min(AppContext* context, coordinates param) {
+double min(AppContext* context, Coordinates param) {
     Node* current = context->coordinates->first;
-    double min = 10000000;
+    double min = LARGE_NUM_FOR_COMP;
     while (current) {
         double value = 0;
         switch (param) {

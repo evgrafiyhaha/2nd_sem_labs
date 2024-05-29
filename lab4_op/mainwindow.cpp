@@ -6,8 +6,8 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    connect(ui->selectButton, &QPushButton::clicked, this, &MainWindow::on_selectFileButton_clicked);
-    connect(ui->loadDataButton, &QPushButton::clicked, this, &MainWindow::on_loadDataButton_clicked);
+    connect(ui->selectButton, &QPushButton::clicked, this, &MainWindow::onSelectFileButtonClicked);
+    connect(ui->loadDataButton, &QPushButton::clicked, this, &MainWindow::onLoadDataButtonClicked);
 
     connect(ui->moveUpButton, &QPushButton::pressed, this, &MainWindow::onMoveUpButtonPressed);
     connect(ui->moveUpButton, &QPushButton::released, this, &MainWindow::onMoveUpButtonReleased);
@@ -39,12 +39,34 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->rotateRightButton, &QPushButton::pressed, this, &MainWindow::onRotateRightButtonPressed);
     connect(ui->rotateRightButton, &QPushButton::released, this, &MainWindow::onRotateRightButtonReleased);
 
-    movementTimer = new QTimer(this);
-    connect(movementTimer, &QTimer::timeout, this, &MainWindow::onMovementTimeout);
-    rotationTimer = new QTimer(this);
-    connect(rotationTimer, &QTimer::timeout, this, &MainWindow::onRotationTimeout);
-    scalingTimer = new QTimer(this);
-    connect(scalingTimer, &QTimer::timeout, this, &MainWindow::onScalingTimeout);
+    movementXForwardTimer = new QTimer(this);
+    connect(movementXForwardTimer, &QTimer::timeout, this, &MainWindow::movementXForwardTimerTimeout);
+    movementXBackTimer = new QTimer(this);
+    connect(movementXBackTimer, &QTimer::timeout, this, &MainWindow::movementXBackTimerTimeout);
+
+    movementZUpTimer = new QTimer(this);
+    connect(movementZUpTimer, &QTimer::timeout, this, &MainWindow::movementZUpTimerTimeout);
+    movementZDownTimer = new QTimer(this);
+    connect(movementZDownTimer, &QTimer::timeout, this, &MainWindow::movementZDownTimerTimeout);
+
+    movementYRightTimer = new QTimer(this);
+    connect(movementYRightTimer, &QTimer::timeout, this, &MainWindow::movementYRightTimerTimeout);
+    movementYLeftTimer = new QTimer(this);
+    connect(movementYLeftTimer, &QTimer::timeout, this, &MainWindow::movementYLeftTimerTimeout);
+
+    rotationZUpTimer = new QTimer(this);
+    connect(rotationZUpTimer, &QTimer::timeout, this, &MainWindow::rotationZUpTimerTimeout);
+    rotationZDownTimer = new QTimer(this);
+    connect(rotationZDownTimer, &QTimer::timeout, this, &MainWindow::rotationZDownTimerTimeout);
+    rotationYLeftTimer = new QTimer(this);
+    connect(rotationYLeftTimer, &QTimer::timeout, this, &MainWindow::rotationYLeftTimeout);
+    rotationYRightTimer = new QTimer(this);
+    connect(rotationYRightTimer, &QTimer::timeout, this, &MainWindow::rotationYRightTimerTimeout);
+
+    scalingUpTimer = new QTimer(this);
+    connect(scalingUpTimer, &QTimer::timeout, this, &MainWindow::scalingUpTimerTimeout);
+    scalingDownTimer = new QTimer(this);
+    connect(scalingDownTimer, &QTimer::timeout, this, &MainWindow::scalingDownTimerTimeout);
 
     connect(ui->scalingDownButton, &QPushButton::pressed, this, &MainWindow::onScalingDownButtonPressed);
     connect(ui->scalingDownButton, &QPushButton::released, this, &MainWindow::onScalingDownButtonReleased);
@@ -59,12 +81,21 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
-    delete movementTimer;
-    delete rotationTimer;
-    delete scalingTimer;
+    delete movementXForwardTimer;
+    delete movementXBackTimer;
+    delete movementZUpTimer;
+    delete movementZDownTimer;
+    delete movementYRightTimer;
+    delete movementYLeftTimer;
+    delete rotationZUpTimer;
+    delete rotationZDownTimer;
+    delete rotationYLeftTimer;
+    delete rotationYRightTimer;
+    delete scalingUpTimer;
+    delete scalingDownTimer;
 }
 
-void MainWindow::on_selectFileButton_clicked() {
+void MainWindow::onSelectFileButtonClicked() {
     AppParams param;
     QString fileName = QFileDialog::getOpenFileName(this, tr("Выберите CSV файл"), "", tr("CSV файлы (*.csv);;Все файлы (*.*)"));
     std::string stdStr = fileName.toStdString();
@@ -76,8 +107,10 @@ void MainWindow::on_selectFileButton_clicked() {
     ui->fileNameLabel->setText(context.fileName);
 }
 
-void MainWindow::on_loadDataButton_clicked() {
+void MainWindow::onLoadDataButtonClicked() {
     AppParams param;
+
+    doOperation(Loading,&context, NULL);
 
     std::string stdStrNormalizationFrom = ui->normalizationFromLabel->text().toStdString();
     const char* cStrNormalizationFrom  = stdStrNormalizationFrom.c_str();
@@ -91,10 +124,8 @@ void MainWindow::on_loadDataButton_clicked() {
 
     doOperation(SetnormalizationTo,&context,&param);
 
-    doOperation(Loading,&context, NULL);
-    if ((context.normalizationFrom < context.normalizationTo && context.normalizationFrom >= 0 && context.normalizationTo >= 0)) {
-        doOperation(Normalizing,&context,NULL);
-    }
+    doOperation(Normalizing,&context,NULL);
+
     updateLabels();
 }
 
@@ -110,16 +141,14 @@ void MainWindow::updateLabels() {
 }
 
 void MainWindow::showModel() {
-    if (((context.normalizationFrom < context.normalizationTo && context.normalizationFrom >= 0 && context.normalizationTo >= 0) || (context.normalizationFrom == 0 && context.normalizationTo == 0))) {
+    if (context.errorData != NormalizationError) {
         QGraphicsScene *scene = new QGraphicsScene(this);
         ui->graphicsView->setScene(scene);
         drawModel(scene);
-    } else {
-        context.errorData = NormalizationError;
     }
 }
 
-double MainWindow::findMax(coordinates param) {
+double MainWindow::findMax(Coordinates param) {
     Node* current = context.coordinates->first;
     double max = 0;
     while (current) {
@@ -145,7 +174,7 @@ double MainWindow::findMax(coordinates param) {
     return max;
 }
 
-double MainWindow::findMin(coordinates param) {
+double MainWindow::findMin(Coordinates param) {
     Node* current = context.coordinates->first;
     double min = BIG_NUM_FOR_COMP;
     while (current) {
@@ -177,23 +206,22 @@ void MainWindow::drawModel(QGraphicsScene *scene) {
     List* prevYPointList = (List*)malloc(sizeof(List));
     prevYPointList->first = NULL;
 
-    double y_perspective, z_perspective;
-    double x0 = 20, y0 = 0, z0 = 0;
+    double Yperspective, Zperspective;
+    double x0 = 300, y0 = 0, z0 = 0;
     double prevY, prevZ;
     int counter = 0;
 
     double d = sqrt(pow(context.centerPoint.x - x0, 2) + pow(context.centerPoint.y - y0, 2) + pow(context.centerPoint.z - z0, 2));
 
-    //ось вращения
-    //scene->addLine((context.centerPoint.y*d)/(context.centerPoint.x + d)*context.cellSize,0,(context.centerPoint.y*d)/(context.centerPoint.x+d)*context.cellSize,-(30*d)/(context.centerPoint.x+d)*context.cellSize, QPen(Qt::green));
 
-    qDebug() << context.centerPoint.x << context.centerPoint.y << context.centerPoint.z;
+    drawShowcasePoint(scene,x0);
+
     while (current) {
-        y_perspective = (current->data.y * d) / (current->data.x + d);
-        z_perspective = (current->data.z * d) / (current->data.x + d);
-        QGraphicsEllipseItem *dataMarker = new QGraphicsEllipseItem(0, 0, context.cellSize/4, context.cellSize/4);
+        Yperspective = (current->data.y * d) / (current->data.x + d);
+        Zperspective = (current->data.z * d) / (current->data.x + d);
+        QGraphicsEllipseItem *dataMarker = new QGraphicsEllipseItem(0, 0, CELL_SIZE/4, CELL_SIZE/4);
         dataMarker->setBrush(QColorConstants::Svg::pink);
-        dataMarker->setPos(y_perspective*context.cellSize - context.cellSize/8, -z_perspective*context.cellSize - context.cellSize/8);
+        dataMarker->setPos(Yperspective*CELL_SIZE - CELL_SIZE/8, -Zperspective*CELL_SIZE - CELL_SIZE/8);
         scene->addItem(dataMarker);
 
         if (counter < context.lineLength) {
@@ -203,14 +231,14 @@ void MainWindow::drawModel(QGraphicsScene *scene) {
             pushEnd(prevYPointList,current->data);
             double prevYYPerspective = (prevYPoint.y * d) / (prevYPoint.x + d);
             double prevYZperspective = (prevYPoint.z * d) / (prevYPoint.x + d);
-            scene->addLine(y_perspective*context.cellSize, -z_perspective*context.cellSize, prevYYPerspective * context.cellSize, -prevYZperspective * context.cellSize, QPen(QColorConstants::Svg::pink));
+            scene->addLine(Yperspective*CELL_SIZE, -Zperspective*CELL_SIZE, prevYYPerspective * CELL_SIZE, -prevYZperspective * CELL_SIZE, QPen(QColorConstants::Svg::pink));
         }
         if ((current != context.coordinates->first) && counter % context.lineLength != 0) {
-            scene->addLine(y_perspective * context.cellSize, -z_perspective * context.cellSize, prevY * context.cellSize, -prevZ * context.cellSize, QPen(QColorConstants::Svg::pink));
+            scene->addLine(Yperspective * CELL_SIZE, -Zperspective * CELL_SIZE, prevY * CELL_SIZE, -prevZ * CELL_SIZE, QPen(QColorConstants::Svg::pink));
         }
 
-        prevY = y_perspective;
-        prevZ = z_perspective;
+        prevY = Yperspective;
+        prevZ = Zperspective;
         current = current->next;
         counter++;
     }
@@ -228,6 +256,15 @@ Point MainWindow::findPrev(List* prevPointsList, int counter) {
         prevPointCurrent = prevPointCurrent->next;
         finder++;
     }
+}
+
+void MainWindow::drawShowcasePoint(QGraphicsScene *scene, double x0) {
+    double perY = 1/x0;
+    double perZ = 1/x0;
+    QGraphicsEllipseItem *dataMarker = new QGraphicsEllipseItem(0, 0, CELL_SIZE/4, CELL_SIZE/4);
+    dataMarker->setBrush(QColorConstants::Svg::blue);
+    dataMarker->setPos(perY*CELL_SIZE - CELL_SIZE/8, -perZ*CELL_SIZE - CELL_SIZE/8);
+    scene->addItem(dataMarker);
 }
 
 void MainWindow::errorCodeHandler() {
@@ -256,167 +293,194 @@ void MainWindow::errorCodeHandler() {
 }
 
 void MainWindow::onMoveUpButtonPressed() {
-    movementTimer->start(TIMER_TIME);
-    AppParams param;
-    param.currentCoordinateOperation = 3;
-    param.direction = 1;
-    doOperation(ChangeCoordinate,&context,&param);
-    doOperation(ChangeDirection,&context,&param);
+    movementZUpTimer->start(TIMER_TIME);
 }
 
 void MainWindow::onMoveUpButtonReleased() {
-    movementTimer->stop();
+    movementZUpTimer->stop();
 }
 
-void MainWindow::onMovementTimeout() {
-    doOperation(Movement,&context,NULL);
+void MainWindow::movementZUpTimerTimeout() {
+    AppParams param;
+    param.coordinateForOperation = Z;
+    param.operationParam = 1;
+    doOperation(Movement,&context,&param);
     updateLabels();
 }
 
 void MainWindow::onMoveDownButtonPressed() {
-    movementTimer->start(TIMER_TIME);
-    AppParams param;
-    param.currentCoordinateOperation = 3;
-    param.direction = -1;
-    doOperation(ChangeCoordinate,&context,&param);
-    doOperation(ChangeDirection,&context,&param);
+    movementZDownTimer->start(TIMER_TIME);
 }
 void MainWindow::onMoveDownButtonReleased() {
-    movementTimer->stop();
+    movementZDownTimer->stop();
+}
+
+void MainWindow::movementZDownTimerTimeout() {
+    AppParams param;
+    param.coordinateForOperation = Z;
+    param.operationParam = -1;
+    doOperation(Movement,&context,&param);
+    updateLabels();
 }
 
 void MainWindow::onMoveLeftButtonPressed() {
-    movementTimer->start(TIMER_TIME);
-    AppParams param;
-    param.currentCoordinateOperation = 2;
-    param.direction = -1;
-    doOperation(ChangeCoordinate,&context,&param);
-    doOperation(ChangeDirection,&context,&param);
+    movementYLeftTimer->start(TIMER_TIME);
 }
 void MainWindow::onMoveLeftButtonReleased() {
-    movementTimer->stop();
+    movementYLeftTimer->stop();
+}
+
+void MainWindow::movementYLeftTimerTimeout() {
+    AppParams param;
+    param.coordinateForOperation = Y;
+    param.operationParam = -1;
+    doOperation(Movement,&context,&param);
+    updateLabels();
 }
 
 void MainWindow::onMoveRightButtonPressed() {
-    movementTimer->start(TIMER_TIME);
-    AppParams param;
-    param.currentCoordinateOperation = 2;
-    param.direction = 1;
-    doOperation(ChangeCoordinate,&context,&param);
-    doOperation(ChangeDirection,&context,&param);
+    movementYRightTimer->start(TIMER_TIME);
 }
 void MainWindow::onMoveRightButtonReleased() {
-    movementTimer->stop();
+    movementYRightTimer->stop();
+}
+
+void MainWindow::movementYRightTimerTimeout() {
+    AppParams param;
+    param.coordinateForOperation = Y;
+    param.operationParam = 1;
+    doOperation(Movement,&context,&param);
+    updateLabels();
 }
 
 void MainWindow::onMoveBackButtonPressed() {
-    movementTimer->start(TIMER_TIME);
-    AppParams param;
-    param.currentCoordinateOperation = 1;
-    param.direction = -1;
-    doOperation(ChangeCoordinate,&context,&param);
-    doOperation(ChangeDirection,&context,&param);
+    movementXBackTimer->start(TIMER_TIME);
 }
 
 void MainWindow::onMoveBackButtonReleased() {
-    movementTimer->stop();
+    movementXBackTimer->stop();
+}
+
+void MainWindow::movementXBackTimerTimeout() {
+    AppParams param;
+    param.coordinateForOperation = X;
+    param.operationParam = -1;
+    doOperation(Movement,&context,&param);
+    updateLabels();
+
 }
 
 void MainWindow::onMoveForwardButtonPressed() {
-    movementTimer->start(TIMER_TIME);
-    AppParams param;
-    param.currentCoordinateOperation = 1;
-    param.direction = 1;
-    doOperation(ChangeCoordinate,&context,&param);
-    doOperation(ChangeDirection,&context,&param);
+    movementXForwardTimer->start(TIMER_TIME);
 }
 
 void MainWindow::onMoveForwardButtonReleased() {
-    movementTimer->stop();
+    movementXForwardTimer->stop();
+}
+
+void MainWindow::movementXForwardTimerTimeout() {
+    AppParams param;
+    param.coordinateForOperation = X;
+    param.operationParam = 1;
+    doOperation(Movement,&context,&param);
+    updateLabels();
 }
 
 void MainWindow::onRotateUpButtonPressed() {
-    rotationTimer->start(TIMER_TIME);
-    AppParams param;
-    param.currentCoordinateOperation = 2;
-    param.direction = 1;
-    doOperation(ChangeCoordinate,&context,&param);
-    doOperation(ChangeDirection,&context,&param);
+    rotationZUpTimer->start(TIMER_TIME);
 }
 
 void MainWindow::onRotateUpButtonReleased() {
-    rotationTimer->stop();
+    rotationZUpTimer->stop();
 }
 
-void MainWindow::onRotationTimeout() {
-    doOperation(Rotation,&context,NULL);
+void MainWindow::rotationZUpTimerTimeout() {
+    AppParams param;
+    param.coordinateForOperation = Y;
+    param.operationParam = 1;
+    doOperation(Rotation,&context,&param);
     updateLabels();
 }
 
 void MainWindow::onRotateDownButtonPressed() {
-    rotationTimer->start(TIMER_TIME);
-    AppParams param;
-    param.currentCoordinateOperation = 2;
-    param.direction = -1;
-    doOperation(ChangeCoordinate,&context,&param);
-    doOperation(ChangeDirection,&context,&param);
+    rotationZDownTimer->start(TIMER_TIME);
 }
 
 void MainWindow::onRotateDownButtonReleased() {
-    rotationTimer->stop();
+    rotationZDownTimer->stop();
 }
 
-void MainWindow::onRotateLeftButtonPressed() {
-    rotationTimer->start(TIMER_TIME);
+void MainWindow::rotationZDownTimerTimeout() {
     AppParams param;
-    param.currentCoordinateOperation = 3;
-    param.direction = -1;
-    doOperation(ChangeCoordinate,&context,&param);
-    doOperation(ChangeDirection,&context,&param);
+    param.coordinateForOperation = Y;
+    param.operationParam = -1;
+    doOperation(Rotation,&context,&param);
+    updateLabels();
+}
+
+
+
+void MainWindow::onRotateLeftButtonPressed() {
+    rotationYLeftTimer->start(TIMER_TIME);
 }
 
 void MainWindow::onRotateLeftButtonReleased() {
-    rotationTimer->stop();
+    rotationYLeftTimer->stop();
 }
 
-void MainWindow::onRotateRightButtonPressed() {
-    rotationTimer->start(TIMER_TIME);
+void MainWindow::rotationYLeftTimeout() {
     AppParams param;
-    param.currentCoordinateOperation = 3;
-    param.direction = 1;
-    doOperation(ChangeCoordinate,&context,&param);
-    doOperation(ChangeDirection,&context,&param);
+    param.coordinateForOperation = Z;
+    param.operationParam = -1;
+    doOperation(Rotation,&context,&param);
+    updateLabels();
+}
+
+
+void MainWindow::onRotateRightButtonPressed() {
+    rotationYRightTimer->start(TIMER_TIME);
 }
 
 void MainWindow::onRotateRightButtonReleased() {
-    rotationTimer->stop();
+    rotationYRightTimer->stop();
+}
+
+void MainWindow::rotationYRightTimerTimeout() {
+    AppParams param;
+    param.coordinateForOperation = Z;
+    param.operationParam = 1;
+    doOperation(Rotation,&context,&param);
+    updateLabels();
 }
 
 void MainWindow::onScalingUpButtonPressed() {
-    scalingTimer->start(TIMER_TIME);
-    AppParams param;
-
-    param.direction = 2;
-    doOperation(ChangeDirection,&context,&param);
+    scalingUpTimer->start(TIMER_TIME);
 }
 
 void MainWindow::onScalingUpButtonReleased() {
-    scalingTimer->stop();
+    scalingUpTimer->stop();
+}
+
+void MainWindow::scalingUpTimerTimeout() {
+    AppParams param;
+
+    param.operationParam = 1.01;
+    doOperation(Scaling,&context,&param);
+    updateLabels();
 }
 
 void MainWindow::onScalingDownButtonPressed() {
-    scalingTimer->start(TIMER_TIME);
-    AppParams param;
-
-    param.direction = 1;
-    doOperation(ChangeDirection,&context,&param);
+    scalingDownTimer->start(TIMER_TIME);
 }
 
 void MainWindow::onScalingDownButtonReleased() {
-    scalingTimer->stop();
+    scalingDownTimer->stop();
 }
 
-void MainWindow::onScalingTimeout() {
-    doOperation(Scaling,&context,NULL);
+void MainWindow::scalingDownTimerTimeout() {
+    AppParams param;
+
+    param.operationParam = 0.99;
+    doOperation(Scaling,&context,&param);
     updateLabels();
 }

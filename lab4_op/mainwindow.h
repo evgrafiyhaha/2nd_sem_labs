@@ -15,7 +15,8 @@
 
 
 #define BIG_NUM_FOR_COMP 10000
-#define TIMER_TIME 100
+#define TIMER_TIME 30
+#define CELL_SIZE 20
 
 
 #define NO_ERRORS "No errors. yet"
@@ -39,8 +40,8 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 private slots:
-    void on_selectFileButton_clicked();
-    void on_loadDataButton_clicked();
+    void onSelectFileButtonClicked();
+    void onLoadDataButtonClicked();
 
     void onMoveUpButtonPressed();
     void onMoveUpButtonReleased();
@@ -78,24 +79,56 @@ private slots:
     void onScalingDownButtonPressed();
     void onScalingDownButtonReleased();
 
-    void onScalingTimeout();
-    void onRotationTimeout();
-    void onMovementTimeout();
+
+
+    void movementXForwardTimerTimeout();
+    void movementXBackTimerTimeout();
+
+    void movementZUpTimerTimeout();
+    void movementZDownTimerTimeout();
+
+    void movementYRightTimerTimeout();
+    void movementYLeftTimerTimeout();
+
+    void rotationZUpTimerTimeout();
+    void rotationZDownTimerTimeout();
+
+    void rotationYLeftTimeout();
+    void rotationYRightTimerTimeout();
+
+    void scalingUpTimerTimeout();
+    void scalingDownTimerTimeout();
 
     void showModel();
     void drawModel(QGraphicsScene *scene);
+    void drawShowcasePoint(QGraphicsScene *scene, double x0);
 
     void updateLabels();
     void errorCodeHandler();
-    double findMax(coordinates param);
-    double findMin(coordinates param);
+    double findMax(Coordinates param);
+    double findMin(Coordinates param);
     Point findPrev(List* prevPointsList, int counter);
 
 private:
     Ui::MainWindow *ui;
-    QTimer *movementTimer;
-    QTimer *rotationTimer;
-    QTimer *scalingTimer;
+
+    QTimer *movementXForwardTimer;
+    QTimer *movementXBackTimer;
+
+    QTimer *movementZUpTimer;
+    QTimer *movementZDownTimer;
+
+    QTimer *movementYRightTimer;
+    QTimer *movementYLeftTimer;
+
+    QTimer *rotationZUpTimer;
+    QTimer *rotationZDownTimer;
+    QTimer *rotationYLeftTimer;
+    QTimer *rotationYRightTimer;
+
+    QTimer *scalingUpTimer;
+    QTimer *scalingDownTimer;
+
     AppContext context;
 };
 #endif // MAINWINDOW_H
