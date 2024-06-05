@@ -5,6 +5,7 @@
 #include "operator.h"
 #include "SyntaxError.h"
 
+
 class ValidationChecker
 {
 public:

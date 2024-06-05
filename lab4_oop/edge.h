@@ -9,11 +9,11 @@ public:
     Edge(std::shared_ptr<Vertex> begin, std::shared_ptr<Vertex> end)
         : _begin(begin), _end(end) {}
 
-    std::shared_ptr<Vertex> GetBegin() {
+    std::shared_ptr<Vertex> getBegin() {
         return _begin;
     }
 
-    std::shared_ptr<Vertex> GetEnd() {
+    std::shared_ptr<Vertex> getEnd() {
         return _end;
     }
 private:

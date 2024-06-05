@@ -6,7 +6,7 @@
 class SceneObject
 {
 public:
-    virtual void Transform(TransformMatrix& matrix) = 0;
+    virtual void transform(TransformMatrix& matrix) = 0;
 };
 
 #endif // SCENEOBJECT_H

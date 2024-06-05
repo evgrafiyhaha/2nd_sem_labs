@@ -9,7 +9,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     connect(ui->selectButton, &QPushButton::clicked, this, &MainWindow::onSelectFileButtonClicked);
     connect(ui->DrawSceneButton, &QPushButton::clicked, this, &MainWindow::onDrawSceneButtonClicked);
-    connect(ui->DoOperationPushButton, &QPushButton::clicked, this, &MainWindow::OnDoOperationButtonClicked);
+    connect(ui->DoOperationPushButton, &QPushButton::clicked, this, &MainWindow::onDoOperationButtonClicked);
 
     buttonGroup->addButton(ui->ScaleRadioButton, 1);
     buttonGroup->addButton(ui->MoveRadioButton, 2);
@@ -28,7 +28,7 @@ void MainWindow::onSelectFileButtonClicked() {
     double max = ui->MaxLabel->text().toDouble();
     NormalizationParameters normParams(min,max);
 
-    FacadeOperationResult result = facade.LoadScene(filePath.toStdString(), normParams);
+    FacadeOperationResult result = facade.loadScene(filePath.toStdString(), normParams);
     if (result.isSucces()) {
         ui->fileNameLabel->setText(filePath);
     }
@@ -40,11 +40,11 @@ void MainWindow::onDrawSceneButtonClicked() {
     ui->graphicsView->setScene(scene);
     facade.setQTScene(scene);
 
-    FacadeOperationResult result = facade.DrawScene();
+    FacadeOperationResult result = facade.drawScene();
     ui->ErrorLabel->setText(result.getErrorMessage().c_str());
 }
 
-void MainWindow::OnDoOperationButtonClicked() {
+void MainWindow::onDoOperationButtonClicked() {
     QAbstractButton *checkedButton = buttonGroup->checkedButton();
     bool convertable;
     double xValue = ui->XlineEdit->text().toDouble(&convertable);
@@ -57,7 +57,7 @@ void MainWindow::OnDoOperationButtonClicked() {
             errorText = NOT_CONVERTABLE_ERROR;
         } else {
             std::string operation = checkedButton->text().toStdString();
-            FacadeOperationResult result = facade.DoOPeration(operation,xValue,yValue,zValue);
+            FacadeOperationResult result = facade.doOPeration(operation,xValue,yValue,zValue);
             errorText = QString::fromStdString(result.getErrorMessage());
         }
     } else {

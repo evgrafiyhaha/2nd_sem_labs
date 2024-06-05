@@ -9,7 +9,7 @@ class BaseFileReader
 {
 public:
     BaseFileReader(){};
-    virtual Scene ReadScene(std::string path, NormalizationParameters normParams) = 0;
+    virtual Scene readScene(std::string path, NormalizationParameters normParams) = 0;
 };
 
 #endif // BASEFILEREADER_H

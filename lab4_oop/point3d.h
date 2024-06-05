@@ -5,7 +5,7 @@ class Point3D
 {
 public:
     Point3D(double _x, double _y, double _z): X(_x), Y(_y), Z(_z) {};
-    Point3D GetPosition() const {
+    Point3D getPosition() const {
         return *this;
     }
     Point3D() : X(0), Y(0), Z(0) {}

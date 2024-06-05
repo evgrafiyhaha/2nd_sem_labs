@@ -28,6 +28,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->delPushButton, &QPushButton::clicked, this, &MainWindow::deleteChar);
 
     ui->outputLabel->setReadOnly(true);
+    this->setMinimumSize(QSize(0, 0));
+
+    this->setMaximumSize(QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX));
 }
 
 MainWindow::~MainWindow()
@@ -36,7 +39,7 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::deleteChar() {
-    if (expression != SYNTAX_ERROR && expression != MATH_ERROR) {
+    if (expression != SYNTAX_ERROR && expression != MATH_ERROR && expression != LONG_NUMBER_ERROR) {
         expression.chop(1);
         ui->outputLabel->setText(expression);
     } else {
@@ -45,7 +48,7 @@ void MainWindow::deleteChar() {
 }
 
 void MainWindow::output(char character) {
-    if (expression == SYNTAX_ERROR || expression == MATH_ERROR) {
+    if (expression == SYNTAX_ERROR || expression == MATH_ERROR || expression == LONG_NUMBER_ERROR) {
         expression = "";
     }
     expression+=character;

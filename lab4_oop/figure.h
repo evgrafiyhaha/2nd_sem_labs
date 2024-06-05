@@ -11,24 +11,24 @@ public:
 
     Figure(std::vector<std::shared_ptr<Vertex>> vertices,std::vector<std::shared_ptr<Edge>> edges): _vertices(vertices), _edges(edges) {};
 
-    void AddVertex(double x, double y, double z) {
+    void addVertex(double x, double y, double z) {
         _vertices.push_back(std::make_shared<Vertex>(x, y, z));
     }
 
-    void AddEdge(std::shared_ptr<Vertex> begin, std::shared_ptr<Vertex> end) {
+    void addEdge(std::shared_ptr<Vertex> begin, std::shared_ptr<Vertex> end) {
         _edges.push_back(std::make_shared<Edge>(begin, end));
     }
 
-    std::vector<std::shared_ptr<Vertex>> GetVertices() {
+    std::vector<std::shared_ptr<Vertex>> getVertices() {
         return _vertices;
     }
 
-    std::vector<std::shared_ptr<Edge>> GetEdges() {
+    std::vector<std::shared_ptr<Edge>> getEdges() {
         return _edges;
     }
-    void Transform(TransformMatrix& matrix) override {
+    void transform(TransformMatrix& matrix) override {
         for (auto& vertex : _vertices) {
-            vertex->Transform(matrix);
+            vertex->transform(matrix);
         }
     }
 private:

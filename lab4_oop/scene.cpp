@@ -12,8 +12,8 @@ void Scene::transformFigures(TransformMatrix matrix) {
         throw NoFiguresError(NO_FIGURES_ERROR);
     }
     for (const auto& figure : _figures) {
-        for (const auto& vertex : figure->GetVertices()) {
-            vertex->Transform(matrix);
+        for (const auto& vertex : figure->getVertices()) {
+            vertex->transform(matrix);
         }
     }
 }

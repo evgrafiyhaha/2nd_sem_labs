@@ -16,7 +16,7 @@ std::vector<std::string> split(const std::string& str, char delimiter) {
 }
 
 
-Scene FileReader::ReadScene(std::string path, NormalizationParameters normParams) {
+Scene FileReader::readScene(std::string path, NormalizationParameters normParams) {
     std::fstream file(path, std::ios::in);
     if (!file) {
         throw FileReadingError(FILE_ERROR);
@@ -60,19 +60,19 @@ Scene FileReader::ReadScene(std::string path, NormalizationParameters normParams
         lineLength = numberCounter;
         lineCounter++;
     }
-    if (normParams.max != 0 && normParams.min != 0) {
+    if (normParams.max != 0 || normParams.min != 0) {
         if (normParams.max > normParams.min) {
-            double minX = (*std::min_element(vertices.begin(), vertices.end(),Vertex::compareX))->GetPosition().X;
-            double minY = (*std::min_element(vertices.begin(), vertices.end(),Vertex::compareY))->GetPosition().Y;
-            double minZ = (*std::min_element(vertices.begin(), vertices.end(),Vertex::compareZ))->GetPosition().Z;
-            double maxX = (*std::max_element(vertices.begin(), vertices.end(),Vertex::compareX))->GetPosition().X;
-            double maxY = (*std::max_element(vertices.begin(), vertices.end(),Vertex::compareY))->GetPosition().Y;
-            double maxZ = (*std::max_element(vertices.begin(), vertices.end(),Vertex::compareZ))->GetPosition().Z;
+            double minX = (*std::min_element(vertices.begin(), vertices.end(),Vertex::compareX))->getPosition().X;
+            double minY = (*std::min_element(vertices.begin(), vertices.end(),Vertex::compareY))->getPosition().Y;
+            double minZ = (*std::min_element(vertices.begin(), vertices.end(),Vertex::compareZ))->getPosition().Z;
+            double maxX = (*std::max_element(vertices.begin(), vertices.end(),Vertex::compareX))->getPosition().X;
+            double maxY = (*std::max_element(vertices.begin(), vertices.end(),Vertex::compareY))->getPosition().Y;
+            double maxZ = (*std::max_element(vertices.begin(), vertices.end(),Vertex::compareZ))->getPosition().Z;
             for (auto& vertex : vertices) {
-                double normedX = NormalizationParameters::normalValue(minX,maxX,vertex->GetPosition().X,normParams.min,normParams.max);
-                double normedY = NormalizationParameters::normalValue(minY,maxY,vertex->GetPosition().Y,normParams.min,normParams.max);
-                double normedZ = NormalizationParameters::normalValue(minZ,maxZ,vertex->GetPosition().Z,normParams.min,normParams.max);
-                vertex->SetPosition(Point3D(normedX,normedY,normedZ));
+                double normedX = NormalizationParameters::normalValue(minX,maxX,vertex->getPosition().X,normParams.min,normParams.max);
+                double normedY = NormalizationParameters::normalValue(minY,maxY,vertex->getPosition().Y,normParams.min,normParams.max);
+                double normedZ = NormalizationParameters::normalValue(minZ,maxZ,vertex->getPosition().Z,normParams.min,normParams.max);
+                vertex->setPosition(Point3D(normedX,normedY,normedZ));
             }
         }
     }

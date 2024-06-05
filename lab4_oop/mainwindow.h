@@ -28,7 +28,7 @@ public:
     ~MainWindow();
     void onSelectFileButtonClicked();
     void onDrawSceneButtonClicked();
-    void OnDoOperationButtonClicked();
+    void onDoOperationButtonClicked();
 
 private:
     Ui::MainWindow *ui;

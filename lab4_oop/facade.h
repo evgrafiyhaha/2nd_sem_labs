@@ -21,12 +21,12 @@ class Facade
     using MethodPtr = FacadeOperationResult (Facade::*)(double, double, double);
 public:
     Facade();
-    FacadeOperationResult DrawScene();
-    FacadeOperationResult LoadScene(std::string filePath, NormalizationParameters normalParams);
-    FacadeOperationResult MoveScene(double x, double y, double z);
-    FacadeOperationResult RotateScene(double x, double y, double z);
-    FacadeOperationResult ScaleScene(double x, double y, double z);
-    FacadeOperationResult DoOPeration(std::string operation, double x, double y, double z);
+    FacadeOperationResult drawScene();
+    FacadeOperationResult loadScene(std::string filePath, NormalizationParameters normalParams);
+    FacadeOperationResult moveScene(double x, double y, double z);
+    FacadeOperationResult rotateScene(double x, double y, double z);
+    FacadeOperationResult scaleScene(double x, double y, double z);
+    FacadeOperationResult doOPeration(std::string operation, double x, double y, double z);
     void setQTScene(QGraphicsScene* scene){_scene.setScene(scene);};
 
 private:

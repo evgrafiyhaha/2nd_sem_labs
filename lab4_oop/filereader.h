@@ -10,7 +10,7 @@ class FileReader: public BaseFileReader
 {
 public:
     FileReader();
-    Scene ReadScene(std::string path, NormalizationParameters normParams) override;
+    Scene readScene(std::string path, NormalizationParameters normParams) override;
 };
 
 #endif // FILEREADER_H

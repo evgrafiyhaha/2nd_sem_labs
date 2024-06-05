@@ -13,6 +13,11 @@ std::vector<Token> Translator::translate() {
                 if (std::count(currentNumber.begin(),currentNumber.end(),'.') > 1){
                     throw SyntaxError(SYNTAX_ERROR);
                 }
+                try {
+                    stof(currentNumber);
+                } catch(...) {
+                    throw LongNumberError(LONG_NUMBER_ERROR);
+                }
 
                 answer.push_back(Token(currentNumber));
                 currentNumber = "";
@@ -26,6 +31,12 @@ std::vector<Token> Translator::translate() {
     if (!currentNumber.empty()) {
         if (std::count(currentNumber.begin(),currentNumber.end(),'.') > 1){
             throw SyntaxError(SYNTAX_ERROR);
+        }
+
+        try {
+            stof(currentNumber);
+        } catch(...) {
+            throw LongNumberError(LONG_NUMBER_ERROR);
         }
 
         answer.push_back(Token(currentNumber));

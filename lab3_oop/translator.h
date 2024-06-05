@@ -4,6 +4,7 @@
 #include <string>
 #include "token.h"
 #include "SyntaxError.h"
+#include "LongNumberError.h"
 
 class Translator
 {

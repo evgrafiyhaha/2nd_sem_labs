@@ -8,9 +8,9 @@ void QtSceneDrawer::drawScene(Scene scene) {
     scene.getScene()->clear();
     QPen pen = QPen(Qt::white);
     for (auto& figure : scene.getFigures()) {
-        for (auto& edge : figure.get()->GetEdges()) {
-            Point3D firstP = edge->GetBegin()->GetPosition();
-            Point3D secondP = edge->GetEnd()->GetPosition();
+        for (auto& edge : figure.get()->getEdges()) {
+            Point3D firstP = edge->getBegin()->getPosition();
+            Point3D secondP = edge->getEnd()->getPosition();
             double firstYPerspective = (firstP.Y * DISTANCE)/(firstP.X + DISTANCE);
             double firstZPerspective = -(firstP.Z * DISTANCE)/(firstP.X + DISTANCE);
             double secondYPerspective = (secondP.Y * DISTANCE)/(secondP.X + DISTANCE);

@@ -1,6 +1,6 @@
 #include "transformmatrixbuilder.h"
 
-TransformMatrix TransformMatrixBuilder::CreateRotationMatrix(double x, double y, double z) {
+TransformMatrix TransformMatrixBuilder::createRotationMatrix(double x, double y, double z) {
     std::array<std::array<double, 4>, 4> matrix;
     if (y == 0 && z == 0) {
         double radians = x * M_PI / 180.0;
@@ -30,7 +30,7 @@ TransformMatrix TransformMatrixBuilder::CreateRotationMatrix(double x, double y,
     return TransformMatrix(matrix);
 }
 
-TransformMatrix TransformMatrixBuilder::CreateMoveMatrix(double x, double y, double z){
+TransformMatrix TransformMatrixBuilder::createMoveMatrix(double x, double y, double z){
     std::array<std::array<double, 4>, 4> matrix;
     matrix = {{
         {1, 0, 0, x},
@@ -42,7 +42,7 @@ TransformMatrix TransformMatrixBuilder::CreateMoveMatrix(double x, double y, dou
 }
 
 
-TransformMatrix TransformMatrixBuilder::CreateScaleMatrix(double x, double y, double z) {
+TransformMatrix TransformMatrixBuilder::createScaleMatrix(double x, double y, double z) {
     std::array<std::array<double, 4>, 4> matrix;
     matrix = {{
         {x, 0, 0, 0},

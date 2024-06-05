@@ -22,7 +22,7 @@ public:
 
     //TransformMatrix operator *(TransformMatrix matrix);
 
-    Point3D TransformPoint(Point3D& point) {
+    Point3D transformPoint(Point3D& point) {
         Point3D result;
         result.X = point.X * _matr[0][0] + point.Y * _matr[0][1] + point.Z * _matr[0][2] + _matr[0][3];
         result.Y = point.X * _matr[1][0] + point.Y * _matr[1][1] + point.Z * _matr[1][2] + _matr[1][3];

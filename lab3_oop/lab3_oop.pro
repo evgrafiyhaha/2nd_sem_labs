@@ -24,6 +24,7 @@ SOURCES += \
     validationchecker.cpp
 
 HEADERS += \
+    LongNumberError.h \
     MathError.h \
     SyntaxError.h \
     add.h \
